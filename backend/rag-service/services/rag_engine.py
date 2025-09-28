@@ -193,7 +193,7 @@ class RAGEngine:
                 abstract=doc.get('abstract', '')[:200] + "...",
                 relevance_score=doc.get('relevance_score', 0.0),
                 yonsei_library_status=availability,
-                access_link=doc.get('access_link', '')
+                yonsei_access_link=doc.get('access_link', '')
             )
             
             metadata_list.append(metadata)

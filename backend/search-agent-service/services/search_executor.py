@@ -27,6 +27,7 @@ class SearchExecutor:
             logger.info(f"Executing search for session {session_id}: {search_query}")
             
             # 도서관 검색 실행
+            # TODO: 소장자료(holdings), 전자자료(electronic) 검색 달리 적절하게 사용하는 로직 필요.
             raw_results = await self.scraper.execute_library_search(
                 query=search_query,
                 search_type="integrated",
@@ -67,6 +68,8 @@ class SearchExecutor:
     def _build_search_query(self, strategy: SearchStrategy) -> str:
         """검색 전략을 실제 검색 쿼리로 변환"""
         
+        # TODO : 검색 전략에서 제한 조건(예: 연도, 자료 유형)도 반영하도록 확장
+        # TODO: 쿼리를 string으로 구성하지 말고 dictionary 형태로 구성해서 library_scraper로 넘기도록 작성
         # 불리언 쿼리가 있으면 우선 사용
         if strategy.boolean_query:
             return strategy.boolean_query
@@ -156,7 +159,7 @@ class SearchExecutor:
         for result in results:
             try:
                 # 소장 여부 확인
-                holdings_info = await self.scraper.check_holdings(
+                holdings_info = await self.scraper.fetch_document(
                     title=result.get('title', ''),
                     authors=result.get('authors', [])
                 )
@@ -170,7 +173,7 @@ class SearchExecutor:
                     abstract=result.get('abstract', ''),
                     relevance_score=result.get('relevance_score', 0.0),
                     yonsei_library_status=holdings_info.get('access_info', ''),
-                    access_link=result.get('detail_link', '')
+                    yonsei_access_link=result.get('detail_link', '')
                 )
                 
                 final_results.append(document_result)
@@ -186,7 +189,7 @@ class SearchExecutor:
                     abstract=result.get('abstract', ''),
                     relevance_score=result.get('relevance_score', 0.0),
                     yonsei_library_status="소장 정보 확인 필요",
-                    access_link=result.get('detail_link', '')
+                    yonsei_access_link=result.get('detail_link', '')
                 )
                 final_results.append(document_result)
         

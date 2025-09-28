@@ -4,6 +4,21 @@ from datetime import datetime
 
 # ===== 기본 모델들 =====
 
+class DocumentResult(BaseModel):
+    """문서 결과"""
+    doc_id: str = Field(..., description="고유 문서 식별자")
+    doc_type: str = Field(..., description='"holdings" 또는 "electronic"')
+    title: str = Field(..., description="문서 제목")
+    authors: List[str] = Field(..., description="저자 목록")
+    publication_year: int = Field(..., description="출판 연도")
+    source: str = Field(..., description="출처 (예: 학술지명, 출판사)")
+    abstract: str = Field(..., description="초록 또는 요약")
+    relevance_score: float = Field(..., description="검색 관련성 점수")
+    yonsei_library_available: bool = Field(..., description="연세 도서관에서 대출 또는 온라인 이용 가능 여부 (True/False)")
+    yonsei_location: Optional[str] = Field(None, description="소장 위치 (소장 자료인 경우)")
+    yonsei_call_number: Optional[str] = Field(None, description="청구기호 (소장 자료인 경우)")
+    yonsei_access_link: str = Field(..., description="학술정보원 접근 링크")
+
 class DialogueRequest(BaseModel):
     """소크라테스식 대화 요청"""
     session_id: str
@@ -29,6 +44,8 @@ class SearchStrategy(BaseModel):
     rationale: str
     academic_fields: List[str] = []
     suggested_databases: List[str] = []
+    search_year_start: Optional[int] = None
+    search_year_end: Optional[int] = None
 
 class StrategyGenerationRequest(BaseModel):
     """전략 생성 요청"""
@@ -58,17 +75,6 @@ class RAGAnalysisRequest(BaseModel):
     session_id: str
     search_strategy: SearchStrategy
     analysis_depth: Optional[str] = "standard"  # "standard" or "detailed"
-
-class DocumentResult(BaseModel):
-    """문서 결과"""
-    title: str
-    authors: List[str]
-    publication_year: int
-    source: str
-    abstract: str
-    relevance_score: float
-    yonsei_library_status: str
-    access_link: str
 
 class RAGAnalysisResponse(BaseModel):
     """RAG 분석 응답"""
@@ -115,14 +121,6 @@ class SessionSummary(BaseModel):
     final_strategy: Optional[SearchStrategy] = None
     document_count: int
     completed_stages: List[int]
-
-# ===== 오류 응답 =====
-
-class ErrorResponse(BaseModel):
-    """오류 응답"""
-    error_code: str
-    message: str
-    details: Optional[Dict[str, Any]] = None
 
 # ===== 서비스 상태 =====
 

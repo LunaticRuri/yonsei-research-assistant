@@ -223,6 +223,7 @@ backup/
 # Monitoring and metrics
 metrics/
 monitoring/
+.VSCodeCounter/
 
 # SSL certificates
 *.crt
