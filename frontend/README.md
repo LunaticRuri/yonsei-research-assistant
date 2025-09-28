@@ -4,11 +4,12 @@
 
 ## 와이어프레임
 
-![outline](./mockup.png)
+![outline](assets_github/mockup.png)  
 
 ## 설치 및 실행
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```

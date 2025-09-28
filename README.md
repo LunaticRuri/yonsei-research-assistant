@@ -6,10 +6,10 @@
 
 ```text
 yonsei-research-assistant/
-├── frontend/                 # Svelte 프론트엔드
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.js
+├── frontend/                 # SvelteKit 프론트엔드
+│   ├── src/   
+│   ├── static/
+│   └── ...
 │
 └── backend/                  # 마이크로서비스들
     ├── api-gateway/          # 중앙 API Gateway (Port: 8000)
@@ -130,7 +130,7 @@ npm run dev
 
 ### 프론트엔드
 
-- Svelte
+- SvelteKit
 - Vite
 - Axios
 
