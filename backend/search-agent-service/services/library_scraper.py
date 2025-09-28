@@ -100,7 +100,7 @@ class LibraryScraper:
             response = self.session.get(detail_url, timeout=10)
             response.raise_for_status()
 
-            result = await self._parse_detail(response.text, document_type)
+            result = await self._parse_detail(response, document_type)
             return result
             
         except Exception as e:
@@ -177,32 +177,106 @@ class LibraryScraper:
         
         return results
     
-    async def _parse_detail(self, html_content: str, search_type: str) -> List[Dict[str, Any]]:
+    async def _parse_detail(self, response: requests.Response, search_type: str) -> List[Dict[str, Any]]:
         """검색 결과 파싱 - 검색 타입에 따라 적절한 파서 호출"""
         
         if search_type == "holdings":
-            return await self._parse_holdings_detail(html_content)
+            return await self._parse_holdings_detail(response)
         elif search_type == "electronic":
-            return await self._parse_electronic_detail(html_content)
+            return await self._parse_electronic_detail(response)
         else:
             raise ValueError(f"Unknown search type: {search_type}")
 
-    async def _parse_holdings_detail(self, html_content: str) -> DocumentResult:
+    async def _parse_holdings_detail(self, response: requests.Response) -> DocumentResult:
         """소장자료 검색 결과 파싱"""
         
-        soup = BeautifulSoup(html_content, 'html.parser')
-        
-        if "현재페이지가 존재하지 않거나, 현재 이용할 수 없는 페이지 입니다." in html_content:
+        if "현재페이지가 존재하지 않거나, 현재 이용할 수 없는 페이지 입니다." in response.text:
             return False
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        try:
+            
+            # 상세 페이지의 URL 추출
+            yonsei_access_link = response.url if hasattr(response, "url") else None
+            doc_id = yonsei_access_link.split("/")[-1] if yonsei_access_link else "unknown"
 
-        ...
+            
+            more_info_table = soup.find("table", id="moreInfo")
+            # moreInfo 테이블에서 각 tr을 순회하며 정보 추출
+            title = None
+            authors = None
+            source = None
+            publication_year = None
+            isbn = None
+            call_number = None
+            location = None
+            status = None
 
-    async def _parse_electronic_detail(self, html_content: str) -> DocumentResult:
+            if more_info_table:
+                for tr in more_info_table.find_all("tr"):
+                    th = tr.find("th")
+                    td = tr.find("td")
+                    if not th or not td:
+                        continue
+                    key = th.get_text(strip=True)
+                    value = td.get_text(strip=True)
+                    if "서명/저자사항" in key:
+                        value_parts = value.split("/")
+                        title = value_parts[0].strip() if value_parts else None
+                        authors = value_parts[1].strip() if len(value_parts) > 1 else None
+                    elif "발행사항" in key:
+                        value_parts = value.split(",")
+                        source = value_parts[0].strip() if value_parts else None
+                        publication_year = int(value_parts[1].strip()) if len(value_parts) > 1 and value_parts[1].strip().isdigit() else None
+                    elif "ISBN" in key:
+                        isbn = value.strip()
+
+            # TODO: 책 소개 -> 이미 수집한 정보에서 가져오는 로직 추가 필요
+            # TODO: 관련성 점수 -> 검색 결과에서 가져오는 로직 추가 필요
+            abstract = ""  # 소장자료는 초록 정보가 없음
+            relevance_score = 1.0  # 기본값 설정
+
+            # 표지 이미지 URL 추출
+            cover_image_tag = soup.find("img", id="coverimage")
+            cover_image_url = cover_image_tag["src"] if cover_image_tag and cover_image_tag.has_attr("src") else None
+
+            holdings_table = soup.find("table", class_="searchTable tablet")
+            # 여러 소장 정보가 있을 수 있음. 그러나 구현의 편의를 위해 하나만 추출.
+            call_num_td = holdings_table.find("td", class_="callNum")
+            call_number = call_num_td.get_text(strip=True) if call_num_td else None
+            location_td = soup.find("td", class_="location")
+            location = location_td.get_text(strip=True) if location_td else None
+            status_span = soup.find("span", class_="status available")
+            status_str = status_span.get_text(strip=True) if status_span else None
+            status = True if status_str and "대출가능" in status_str else False
+
+            return DocumentResult(
+                doc_id=doc_id,
+                doc_type="holdings",
+                title=title,
+                isbn=isbn,
+                authors = authors,
+                publication_year=publication_year,
+                source=source,
+                abstract=abstract,
+                corver_image_url=cover_image_url,
+                relevance_score=relevance_score,
+                yonsei_library_available=status,
+                yonsei_location=location,
+                yonsei_call_number=call_number,
+                yonsei_access_link=yonsei_access_link
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to parse holdings detail: {e}")
+            
+
+    async def _parse_electronic_detail(self, response: requests.Response) -> DocumentResult:
         """전자자료 검색 결과 파싱"""
         
-        soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        if "현재페이지가 존재하지 않거나, 현재 이용할 수 없는 페이지 입니다." in html_content:
+        if "현재페이지가 존재하지 않거나, 현재 이용할 수 없는 페이지 입니다." in response.text:
             return False
         
         ...
