@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - DIALOGUE_SERVICE_URL=http://dialogue-service:8001
+      - STRATEGY_SERVICE_URL=http://strategy-service:8002
+      - RAG_SERVICE_URL=http://rag-service:8003
+      - SEARCH_AGENT_SERVICE_URL=http://search-agent-service:8004
+    depends_on:
+      - dialogue-service
+      - strategy-service
+      - rag-service
+      - search-agent-service
+    networks:
+      - yonsei-research-network
+
+  # Dialogue Service
+  dialogue-service:
+    build: ./dialogue-service
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - yonsei-research-network
+
+  # Strategy Service
+  strategy-service:
+    build: ./strategy-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - yonsei-research-network
+
+  # RAG Service
+  rag-service:
+    build: ./rag-service
+    ports:
+      - "8003:8003"
+    environment:
+      - CHROMA_DB_PATH=/app/data/chroma_db
+    volumes:
+      - ./shared:/app/shared
+      - rag-data:/app/data
+    networks:
+      - yonsei-research-network
+
+  # Search Agent Service
+  search-agent-service:
+    build: ./search-agent-service
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./shared:/app/shared
+    networks:
+      - yonsei-research-network
+
+  # Frontend (개발용)
+  frontend:
+    build: ../frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - api-gateway
+    networks:
+      - yonsei-research-network
+
+networks:
+  yonsei-research-network:
+    driver: bridge
+
+volumes:
+  rag-data:
+    driver: local

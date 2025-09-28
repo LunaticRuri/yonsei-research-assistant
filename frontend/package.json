@@ -1,0 +1,18 @@
+{
+  "name": "yonsei-research-assistant-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "svelte": "^4.0.5",
+    "vite": "^5.0.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
