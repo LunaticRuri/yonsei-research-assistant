@@ -139,3 +139,14 @@ class SystemStatus(BaseModel):
     overall_status: str
     services: List[ServiceStatus]
     active_sessions: int
+
+
+# ===== 대화 기록 =====
+# 1. Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
+class Conversation(BaseModel):
+    id: str  # 각 대화의 고유 ID (라우팅에 사용)
+    title: str
+    last_updated: str
+
+
+
