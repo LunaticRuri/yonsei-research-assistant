@@ -1,85 +1,66 @@
 version: '3.8'
 
 services:
-  # API Gateway
+  # ------------------------- [추가] Redis 서비스 -------------------------
+  redis:
+    image: "redis:alpine"
+    container_name: suri_redis
+    ports:
+      - "6379:6379"
+    restart: always
+  # --------------------------------------------------------------------
+
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: ./api-gateway
+    container_name: suri_api_gateway
     ports:
       - "8000:8000"
-    environment:
-      - DIALOGUE_SERVICE_URL=http://dialogue-service:8001
-      - STRATEGY_SERVICE_URL=http://strategy-service:8002
-      - RAG_SERVICE_URL=http://rag-service:8003
-      - SEARCH_AGENT_SERVICE_URL=http://search-agent-service:8004
+    restart: always
     depends_on:
       - dialogue-service
       - strategy-service
       - rag-service
       - search-agent-service
-    networks:
-      - yonsei-research-network
 
-  # Dialogue Service
   dialogue-service:
-    build: ./dialogue-service
+    build:
+      context: ./dialogue-service
+    container_name: suri_dialogue_service
     ports:
       - "8001:8001"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    volumes:
-      - ./shared:/app/shared
-    networks:
-      - yonsei-research-network
+    env_file:
+      - ./.env
+    restart: always
 
-  # Strategy Service
   strategy-service:
-    build: ./strategy-service
+    build:
+      context: ./strategy-service
+    container_name: suri_strategy_service
     ports:
       - "8002:8002"
-    volumes:
-      - ./shared:/app/shared
-    networks:
-      - yonsei-research-network
+    env_file:
+      - ./.env
+    restart: always
+    # --- [추가] strategy-service가 시작되기 전에 redis가 먼저 실행되도록 설정 ---
+    depends_on:
+      - redis
+    # --------------------------------------------------------------------
 
-  # RAG Service
   rag-service:
-    build: ./rag-service
+    build:
+      context: ./rag-service
+    container_name: suri_rag_service
     ports:
       - "8003:8003"
-    environment:
-      - CHROMA_DB_PATH=/app/data/chroma_db
-    volumes:
-      - ./shared:/app/shared
-      - rag-data:/app/data
-    networks:
-      - yonsei-research-network
+    env_file:
+      - ./.env
+    restart: always
 
-  # Search Agent Service
   search-agent-service:
-    build: ./search-agent-service
+    build:
+      context: ./search-agent-service
+    container_name: suri_search_agent_service
     ports:
       - "8004:8004"
-    volumes:
-      - ./shared:/app/shared
-    networks:
-      - yonsei-research-network
-
-  # Frontend (개발용)
-  frontend:
-    build: ../frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8000
-    depends_on:
-      - api-gateway
-    networks:
-      - yonsei-research-network
-
-networks:
-  yonsei-research-network:
-    driver: bridge
-
-volumes:
-  rag-data:
-    driver: local
+    restart: always

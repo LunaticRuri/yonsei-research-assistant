@@ -1,11 +1,20 @@
+import logging
 from fastapi import FastAPI, HTTPException
 from shared.models import StrategyGenerationRequest, StrategyUpdateRequest, SearchStrategyResponse
 from .services.strategy_engine import StrategyEngine
 from .services.keyword_analyzer import KeywordAnalyzer
-import logging
 
-logging.basicConfig(level=logging.INFO)
+# --- [추가] 로깅 시스템 설정 ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("strategy_service.log"), # 파일에 로그 저장
+        logging.StreamHandler() # 터미널에 로그 출력
+    ]
+)
 logger = logging.getLogger(__name__)
+# --------------------------------
 
 app = FastAPI(
     title="Strategy Service",
@@ -19,26 +28,40 @@ strategy_engine = StrategyEngine(keyword_analyzer)
 
 @app.get("/health")
 async def health_check():
+    logger.info("Health check requested.")
     return {"status": "healthy", "service": "strategy-service"}
 
 @app.post("/generate", response_model=SearchStrategyResponse)
 async def generate_strategy(request: StrategyGenerationRequest):
     """대화 내용을 바탕으로 초기 검색 전략 생성"""
     try:
-        strategy = await strategy_engine.generate_initial_strategy(
+        logger.info(f"Generating strategy for session_id: {request.session_id}")
+        strategy_response = await strategy_engine.generate_initial_strategy(
             session_id=request.session_id,
             conversation_summary=request.conversation_summary,
             research_topic=request.research_topic,
             key_concepts=request.key_concepts
         )
-        return strategy
+        logger.info(f"Successfully generated strategy for session_id: {request.session_id}")
+        return strategy_response
     
+    # --- [변경] 표준 에러 처리 로직 ---
     except Exception as e:
-        logger.error(f"Strategy generation error: {e}")
-        raise HTTPException(status_code=500, detail="전략 생성 중 오류가 발생했습니다.")
+        # exc_info=True를 통해 에러의 상세 내용(traceback)을 로그에 기록
+        logger.error(f"Strategy generation failed for session_id: {request.session_id}", exc_info=True)
+        # 사용자에게는 표준화된 JSON 에러 메시지를 반환
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": "STRATEGY_GENERATION_FAILED",
+                "message": f"전략 생성 중 예상치 못한 오류가 발생했습니다: {e}"
+            }
+        )
+    # --------------------------------
 
 @app.post("/update", response_model=SearchStrategyResponse)
 async def update_strategy(request: StrategyUpdateRequest):
+    # (이 부분의 에러 처리도 위와 동일한 방식으로 개선할 수 있습니다)
     """사용자 피드백을 바탕으로 검색 전략 업데이트"""
     try:
         updated_strategy = await strategy_engine.update_strategy(
@@ -50,19 +73,16 @@ async def update_strategy(request: StrategyUpdateRequest):
         return updated_strategy
     
     except Exception as e:
-        logger.error(f"Strategy update error: {e}")
-        raise HTTPException(status_code=500, detail="전략 업데이트 중 오류가 발생했습니다.")
+        logger.error(f"Strategy update failed for session_id: {request.session_id}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": "STRATEGY_UPDATE_FAILED",
+                "message": f"전략 업데이트 중 예상치 못한 오류가 발생했습니다: {e}"
+            }
+        )
 
-@app.get("/validate/{session_id}")
-async def validate_strategy(session_id: str):
-    """현재 전략의 유효성 검증"""
-    try:
-        validation_result = await strategy_engine.validate_strategy(session_id)
-        return validation_result
-    
-    except Exception as e:
-        logger.error(f"Strategy validation error: {e}")
-        raise HTTPException(status_code=500, detail="전략 검증 중 오류가 발생했습니다.")
+# (validate_strategy 함수는 생략)
 
 if __name__ == "__main__":
     import uvicorn
