@@ -1,12 +1,14 @@
 <script lang="ts">
     import SidePanel from '$lib/components/SidePanel.svelte';
     import type { PageData } from './$types';
+	import MainPanel from '$lib/components/MainPanel.svelte';
     export let data: PageData;
-</script>
+
+</script> 
 <SidePanel {data} />
+<MainPanel  {data} step={0} />
 
-
-<!-- <style>
+<style>
     .new-study-button {
         padding: 10px 15px;
         background-color: #007bff;
@@ -29,4 +31,4 @@
         padding-top: 20px;
         text-align: center;
     }
-</style> -->
+</style>

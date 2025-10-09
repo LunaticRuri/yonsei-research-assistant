@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import type { StudySummary } from '../types/study';
 import { error , fail, redirect } from '@sveltejs/kit';
 // Update the import path to the correct location of your config file
-import { config } from '../shared/config'; 
+import { config } from '../lib/shared/config'; 
 
 // 실제 사용자의 ID를 가져오는 함수 (인증 시스템에서 구현해야 함)
 function getUserId(): string {
