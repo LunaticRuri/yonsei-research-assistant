@@ -1,14 +1,12 @@
-version: '3.8'
+# version: '3.8' # 이 줄은 삭제하거나 주석 처리해도 됩니다.
 
 services:
-  # ------------------------- [추가] Redis 서비스 -------------------------
   redis:
     image: "redis:alpine"
     container_name: suri_redis
     ports:
       - "6379:6379"
     restart: always
-  # --------------------------------------------------------------------
 
   api-gateway:
     build:
@@ -17,6 +15,8 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    volumes: # --- [추가] ---
+      - ./shared:/app/shared
     depends_on:
       - dialogue-service
       - strategy-service
@@ -32,6 +32,8 @@ services:
     env_file:
       - ./.env
     restart: always
+    volumes: # --- [추가] ---
+      - ./shared:/app/shared
 
   strategy-service:
     build:
@@ -42,10 +44,10 @@ services:
     env_file:
       - ./.env
     restart: always
-    # --- [추가] strategy-service가 시작되기 전에 redis가 먼저 실행되도록 설정 ---
+    volumes: # --- [추가] ---
+      - ./shared:/app/shared
     depends_on:
       - redis
-    # --------------------------------------------------------------------
 
   rag-service:
     build:
@@ -56,6 +58,8 @@ services:
     env_file:
       - ./.env
     restart: always
+    volumes: # --- [추가] ---
+      - ./shared:/app/shared
 
   search-agent-service:
     build:
@@ -64,3 +68,5 @@ services:
     ports:
       - "8004:8004"
     restart: always
+    volumes: # --- [추가] ---
+      - ./shared:/app/shared

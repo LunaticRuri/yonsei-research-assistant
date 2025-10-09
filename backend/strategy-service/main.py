@@ -1,8 +1,8 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from shared.models import StrategyGenerationRequest, StrategyUpdateRequest, SearchStrategyResponse
-from .services.strategy_engine import StrategyEngine
-from .services.keyword_analyzer import KeywordAnalyzer
+from services.strategy_engine import StrategyEngine
+from services.keyword_analyzer import KeywordAnalyzer
 
 # --- [추가] 로깅 시스템 설정 ---
 logging.basicConfig(
@@ -82,7 +82,24 @@ async def update_strategy(request: StrategyUpdateRequest):
             }
         )
 
-# (validate_strategy 함수는 생략)
+@app.get("/validate/{session_id}")
+async def validate_strategy(session_id: str):
+    """현재 전략의 유효성 검증"""
+    try:
+        logger.info(f"Validating strategy for session_id: {session_id}")
+        validation_result = await strategy_engine.validate_strategy(session_id)
+        return validation_result
+
+    except Exception as e:
+        logger.error(f"Strategy validation failed for session_id: {session_id}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": "STRATEGY_VALIDATION_FAILED",
+                "message": f"전략 검증 중 예상치 못한 오류가 발생했습니다: {e}"
+            }
+        )
+
 
 if __name__ == "__main__":
     import uvicorn
