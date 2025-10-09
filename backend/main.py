@@ -155,7 +155,7 @@ async def get_study_details(study_id: str, user_id: str):
         "title": study['title'],
         "messages1": [
             {"role": "user", "text": "첫 번째 질문입니다(1)."},
-            {"role": "assistant", "text": "첫 번째 응답입니다(1)."},
+            {"role": "assistant", "text": "첫 번째 응답입니다(1).", "is_subject": False},
         ],
         "messages1_complete": False,
 
