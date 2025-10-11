@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from shared.models import LibrarySearchRequest, LibrarySearchResponse
-from .services.library_scraper import LibraryScraper
-from .services.search_executor import SearchExecutor
+from services.library_scraper import LibraryScraper
+from services.search_executor import SearchExecutor
 import logging
 
 logging.basicConfig(level=logging.INFO)

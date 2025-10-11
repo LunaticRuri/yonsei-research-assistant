@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from shared.models import RAGAnalysisRequest, RAGAnalysisResponse
-from .services.rag_engine import RAGEngine
-from .services.vector_store import VectorStoreManager
-from .services.document_processor import DocumentProcessor
+from services.rag_engine import RAGEngine
+from services.vector_store import VectorStoreManager
+from services.document_processor import DocumentProcessor
 import logging
 
 logging.basicConfig(level=logging.INFO)
