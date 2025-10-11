@@ -38,7 +38,7 @@ async def generate_strategy(request: StrategyGenerationRequest):
         logger.info(f"Generating strategy for session_id: {request.session_id}")
         strategy_response = await strategy_engine.generate_initial_strategy(
             session_id=request.session_id,
-            conversation_summary=request.conversation_summary,
+            study_summary=request.study_summary,
             research_topic=request.research_topic,
             key_concepts=request.key_concepts
         )
