@@ -10,7 +10,8 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
     container_name: suri_api_gateway
     ports:
       - "8000:8000"
@@ -25,7 +26,8 @@ services:
 
   dialogue-service:
     build:
-      context: ./dialogue-service
+      context: .
+      dockerfile: ./dialogue-service/Dockerfile
     container_name: suri_dialogue_service
     ports:
       - "8001:8001"
@@ -37,7 +39,8 @@ services:
 
   strategy-service:
     build:
-      context: ./strategy-service
+      context: .
+      dockerfile: ./strategy-service/Dockerfile
     container_name: suri_strategy_service
     ports:
       - "8002:8002"
@@ -51,7 +54,8 @@ services:
 
   rag-service:
     build:
-      context: ./rag-service
+      context: .
+      dockerfile: ./rag-service/Dockerfile
     container_name: suri_rag_service
     ports:
       - "8003:8003"
@@ -63,7 +67,8 @@ services:
 
   search-agent-service:
     build:
-      context: ./search-agent-service
+      context: .
+      dockerfile: ./search-agent-service/Dockerfile
     container_name: suri_search_agent_service
     ports:
       - "8004:8004"
