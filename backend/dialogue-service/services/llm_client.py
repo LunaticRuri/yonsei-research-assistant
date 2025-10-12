@@ -22,6 +22,17 @@ class LLMClient:
     ) -> str:
         """LLM으로부터 응답 생성"""
         try:
+            if not os.getenv("OPENAI_API_KEY"): #테스트용
+            return """
+            {
+                "response": "테스트 모드입니다. 실제 LLM 호출 없이 더미 응답을 반환합니다.",
+                "follow_ups": ["이 주제에서 흥미로운 측면은 무엇일까요?", "좀 더 구체적인 예시를 들어볼까요?"],
+                "insights": ["연구 주제 구조를 점검할 수 있습니다."],
+                "stage_assessment": "Mock mode active"
+            }
+            """
+            
+            #실제 응답
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
