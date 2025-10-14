@@ -40,7 +40,7 @@ class DialogueEngine:
         )
         
         # LLM을 통한 응답 생성
-        llm_response = await self.llm_client.generate_response(prompt)
+        llm_response = await self.llm_client.generate_response(prompt)  #llm_client.generate_structured_response 로 변경 필요
         
         # 응답 파싱 및 세션 업데이트
         parsed_response = self._parse_llm_response(llm_response)
