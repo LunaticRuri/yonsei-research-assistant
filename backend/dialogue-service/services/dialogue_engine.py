@@ -7,6 +7,8 @@ import uuid
 class DialogueEngine:
     """소크라테스식 대화를 관리하는 엔진"""
     
+    # to-do: response_schema 정의하기
+    
     def __init__(self, llm_client: LLMClient):
         self.llm_client = llm_client
         self.prompts = DialoguePrompts()
@@ -40,7 +42,8 @@ class DialogueEngine:
         )
         
         # LLM을 통한 응답 생성
-        llm_response = await self.llm_client.generate_response(prompt)  #llm_client.generate_structured_response 로 변경 필요
+        # llm_response = await self.llm_client.generate_structured_response(prompt, response_schema)
+        llm_response = await self.llm_client.generate_response(prompt)
         
         # 응답 파싱 및 세션 업데이트
         parsed_response = self._parse_llm_response(llm_response)
