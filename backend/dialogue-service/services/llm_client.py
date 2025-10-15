@@ -65,4 +65,5 @@ class LLMClient:
     def estimate_tokens(self, text: str) -> int:
         """텍스트의 대략적인 토큰 수 추정"""
         # 대략적인 추정: 1 토큰 ≈ 4 글자 (한국어)
+        #Titoken 고려해보기
         return len(text) // 3
