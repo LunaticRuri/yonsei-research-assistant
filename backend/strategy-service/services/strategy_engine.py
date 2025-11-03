@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
-from shared.models import SearchStrategyResponse, SearchStrategy
-from services.keyword_analyzer import KeywordAnalyzer
-from database import get_redis_connection # --- [추가] 데이터베이스 연결 함수 임포트
+from shared.models import SearchStrategyResponse, SearchStrategy # (이건 backend/에서 실행해서 OK)
+from .keyword_analyzer import KeywordAnalyzer # <--- 1번 수정! (같은 폴더에 있다는 뜻)
+from ..database import get_redis_connection # <--- 2번 수정! (부모 폴더에 있다는 뜻)
 
 class StrategyEngine:
     """검색 전략 생성 및 관리 엔진 (Redis 연동)"""

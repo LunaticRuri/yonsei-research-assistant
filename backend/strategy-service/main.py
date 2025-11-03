@@ -1,8 +1,8 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from shared.models import StrategyGenerationRequest, StrategyUpdateRequest, SearchStrategyResponse
-from services.strategy_engine import StrategyEngine
-from services.keyword_analyzer import KeywordAnalyzer
+from .services.strategy_engine import StrategyEngine   # <--- 4번째 줄 (점 추가!)
+from .services.keyword_analyzer import KeywordAnalyzer # <--- 5번째 줄 (점 추가!)
 
 # --- [추가] 로깅 시스템 설정 ---
 logging.basicConfig(
@@ -36,12 +36,17 @@ async def generate_strategy(request: StrategyGenerationRequest):
     """대화 내용을 바탕으로 초기 검색 전략 생성"""
     try:
         logger.info(f"Generating strategy for session_id: {request.session_id}")
+        
+        # --- [최종 확인!] ---
+        # request.conversation_summary를 사용해야 합니다.
         strategy_response = await strategy_engine.generate_initial_strategy(
             session_id=request.session_id,
-            study_summary=request.study_summary,
+            conversation_summary=request.conversation_summary, # <--- 이 부분이 맞는지 확인!
             research_topic=request.research_topic,
             key_concepts=request.key_concepts
         )
+        # ---------------------
+        
         logger.info(f"Successfully generated strategy for session_id: {request.session_id}")
         return strategy_response
     
