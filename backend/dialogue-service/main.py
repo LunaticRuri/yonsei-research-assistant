@@ -1,5 +1,7 @@
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import os, sys
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # ...\backend
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from fastapi import FastAPI
 from shared.models import DialogueRequest, DialogueResponse
