@@ -1,29 +1,7 @@
-# ==== PATH DIAG + FIX (put this at VERY TOP) ====
-import sys, os
-from pathlib import Path
+import sys
+import os
 
-HERE = Path(__file__).resolve()                 # .../backend/dialogue-service/main.py
-BACKEND_DIR = HERE.parents[1]                   # .../backend
-ROOT_DIR = HERE.parents[2] if len(HERE.parents) >= 2 else None  # .../ (프로젝트 루트)
-
-def _ensure_path(p: Path):
-    p_str = str(p)
-    if p_str not in sys.path:
-        sys.path.insert(0, p_str)
-
-# 1) shared가 있는 'backend'를 우선 경로에 추가
-_ensure_path(BACKEND_DIR)
-
-# (선택) 2) 루트도 추가해 패키지 실행 방식 바뀌어도 안전하게
-if ROOT_DIR:
-    _ensure_path(ROOT_DIR)
-
-# 디버그: 실제 탐색 경로와 shared 존재 여부 출력
-print("[DEBUG] sys.path[0:3] =", sys.path[:3])
-print("[DEBUG] BACKEND_DIR =", BACKEND_DIR)
-print("[DEBUG] shared exists? ", (BACKEND_DIR / "shared").exists())
-print("[DEBUG] models.py exists? ", (BACKEND_DIR / "shared" / "models.py").exists())
-# ===============================================
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from fastapi import FastAPI
 from shared.models import DialogueRequest, DialogueResponse
