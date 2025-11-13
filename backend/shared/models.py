@@ -148,5 +148,14 @@ class Conversation(BaseModel):
     title: str
     last_updated: str
 
+# ===== 라우팅 =====
+class RouteRequest(BaseModel):
+    """/api/strategy/route 엔드포인트의 요청 모델"""
+    user_query: str = Field(..., description="사용자의 원본 질문")
 
+class RouteResponse(BaseModel):
+    """/api/strategy/route 엔드포인트의 응답 모델"""
+    destination: str = Field(..., description="라우팅 목적지 (rag-service 또는 search-agent-service)")
+    reason: str = Field(description="라우팅 결정 이유")
+    keywords: List[str] = Field(description="추출된 핵심 키워드")
 
