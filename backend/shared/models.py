@@ -148,5 +148,10 @@ class Conversation(BaseModel):
     title: str
     last_updated: str
 
+# ===== 라우팅 =====
+class RoutingDecision(BaseModel):
+    """라우팅 결정 결과를 담는 모델"""
+    route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
+    reason: str = Field(..., description="라우팅 결정 이유")
 
 
