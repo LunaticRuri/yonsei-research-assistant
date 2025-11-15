@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from functools import lru_cache
 
 class Settings(BaseSettings):
     """애플리케이션 설정"""
@@ -40,3 +41,11 @@ class Settings(BaseSettings):
 
 # 전역 설정 인스턴스
 settings = Settings()
+
+@lru_cache
+def get_settings() -> Settings:
+    """
+    .env 파일을 읽어 Settings 객체를 생성하고 캐시합니다.
+    앱 전체에서 이 함수를 호출해도 .env 파일은 딱 한 번만 읽습니다.
+    """
+    return Settings()
