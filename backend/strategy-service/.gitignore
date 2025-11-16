@@ -1,0 +1,8 @@
+
+# --- (기존 .gitignore 내용 아래에 추가됨) ---
+# API 키가 포함된 .env 파일 무시
+backend/.env
+
+# 서버 실행 로그 파일 무시
+server.log
+backend/strategy-service/server.log
