@@ -228,3 +228,5 @@ monitoring/
 *.crt
 *.cert
 ssl/
+
+playground.py

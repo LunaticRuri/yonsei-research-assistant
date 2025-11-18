@@ -22,7 +22,7 @@ class LibraryScraper:
         }
         
         # 요청 간격 (윤리적 스크래핑)
-        self.request_delay = 1.0
+        self.request_delay = 0.5
         
         # 세션 설정
         self.session = requests.Session()
@@ -37,13 +37,85 @@ class LibraryScraper:
         self, 
         query: str, 
         search_type: str = "integrated",
-        max_results: int = 20
+        search_field: str = "TOTAL",
+        max_results: int = 20,
+        year_from: Optional[str] = None,
+        year_to: Optional[str] = None,
+        additional_queries: Optional[List[Dict[str, str]]] = None,
+        material_types: Optional[List[str]] = None,
+        results_per_page: int = 10
     ) -> List[Dict[str, Any]]:
-        """도서관 통합검색 실행"""
+        """
+        도서관 통합검색 실행
+        
+        Args:
+            query: 주 검색어
+            search_type: 검색 유형 (integrated, books, articles, thesis)
+            search_field: 주 검색어의 검색 항목
+                - "TOTAL": 전체
+                - "1": 서명(책제목)
+                - "2": 저자
+                - "3": 출판사
+                - "4": 주제어
+            max_results: 최대 결과 수
+            year_from: 시작 연도 (예: "2020")
+            year_to: 종료 연도 (예: "2025")
+            additional_queries: 추가 검색 조건 리스트
+                각 항목은 {"si": 검색필드, "q": 검색어, "operator": 연산자} 형식
+            material_types: 자료유형 리스트 (여러 개 선택 가능)
+                - "m": 단행본
+                - "s": 연속간행물
+                - "b;p;v;x;u;c": 멀티미디어/비도서
+                - "t": 학위논문
+                - "o": 고서
+                - "zart": 기사
+            results_per_page: 쪽당 출력 건수 (5, 10, 15, 20, 30, 50, 100)
+        
+        Examples:
+            # 간단한 검색: "휴대폰 OR 스마트폰 NOT 아이폰"
+            await execute_library_search(
+                query="휴대폰",
+                additional_queries=[
+                    {"si": "TOTAL", "q": "스마트폰", "operator": "or"},
+                    {"si": "TOTAL", "q": "아이폰", "operator": "not"}
+                ],
+                year_from="2020",
+                year_to="2025",
+                results_per_page=100
+            )
+            
+            # 필드별 검색: 서명='휴대폰' AND 저자='김철수' AND 주제어='아이폰'
+            await execute_library_search(
+                query="휴대폰",
+                search_field="1",  # 서명
+                additional_queries=[
+                    {"si": "2", "q": "김철수", "operator": "and"},  # 저자
+                    {"si": "4", "q": "아이폰", "operator": "and"}   # 주제어
+                ],
+                year_from="2020",
+                year_to="2025",
+                results_per_page=100
+            )
+            
+            # 자료유형 선택: 연속간행물과 학위논문만
+            await execute_library_search(
+                query="휴대폰",
+                material_types=["s", "t"]  # 연속간행물, 학위논문
+            )
+        """
         
         try:
             # 검색 URL 구성
-            search_url = self._build_search_url(query, search_type)
+            search_url = self._build_search_url(
+                query, 
+                search_type,
+                search_field=search_field,
+                year_from=year_from,
+                year_to=year_to,
+                additional_queries=additional_queries,
+                material_types=material_types,
+                results_per_page=results_per_page
+            )
             
             logger.info(f"Executing library search: {search_url}")
             
@@ -167,22 +239,147 @@ class LibraryScraper:
                 "message": str(e)
             }
     
-    def _build_search_url(self, query: str, search_type: str) -> str:
-        """검색 URL 구성"""
+    def _build_search_url(
+        self, 
+        query: str, 
+        search_type: str,
+        search_field: str = "TOTAL",
+        year_from: Optional[str] = None,
+        year_to: Optional[str] = None,
+        additional_queries: Optional[List[Dict[str, str]]] = None,
+        material_types: Optional[List[str]] = None,
+        results_per_page: int = 10
+    ) -> str:
+        """
+        검색 URL 구성
         
-        endpoint = self.search_endpoints.get(search_type, self.search_endpoints["integrated"])
-        encoded_query = quote(query)
+        Args:
+            query: 주 검색어
+            search_type: 검색 유형 (integrated, books, articles, thesis)
+            search_field: 주 검색어의 검색 항목
+                - "TOTAL": 전체
+                - "1": 서명(책제목)
+                - "2": 저자
+                - "3": 출판사
+                - "4": 주제어
+            year_from: 시작 연도 (예: "2020")
+            year_to: 종료 연도 (예: "2025")
+            additional_queries: 추가 검색 조건 리스트
+                예: [{"si": "2", "q": "김철수", "operator": "and"},
+                     {"si": "4", "q": "아이폰", "operator": "and"}]
+            material_types: 자료유형 리스트 (여러 개 선택 가능)
+                - "m": 단행본
+                - "s": 연속간행물
+                - "b;p;v;x;u;c": 멀티미디어/비도서
+                - "t": 학위논문
+                - "o": 고서
+                - "zart": 기사
+                - None이면 search_type에 따라 자동 결정
+            results_per_page: 쪽당 출력 건수 (5, 10, 15, 20, 30, 50, 100)
         
-        # 기본 검색 매개변수
-        params = {
-            'q': encoded_query,
-            'page': 1,
-            'size': 20,
-            'sort': 'relevance'
-        }
+        Examples:
+            # 서명='휴대폰' AND 저자='김철수' AND 주제어='아이폰'
+            _build_search_url(
+                query="휴대폰",
+                search_field="1",  # 서명
+                additional_queries=[
+                    {"si": "2", "q": "김철수", "operator": "and"},  # 저자
+                    {"si": "4", "q": "아이폰", "operator": "and"}   # 주제어
+                ]
+            )
+            
+            # 연속간행물과 학위논문만 검색
+            _build_search_url(
+                query="휴대폰",
+                material_types=["s", "t"]  # 연속간행물, 학위논문
+            )
+        """
         
-        # URL 매개변수 문자열 구성
-        param_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        # 통합검색 결과 페이지 엔드포인트
+        endpoint = "/search/tot/result"
+        
+        # 기본 검색 파라미터 구성 (순서 중요)
+        params = []
+        
+        # 필수 파라미터
+        params.append(('st', 'KWRD'))
+        params.append(('commandType', 'advanced'))
+        
+        # 첫 번째 검색어 (주 검색어)
+        params.append(('si', search_field))
+        params.append(('q', query))
+        
+        # 추가 검색어가 있는 경우 (AND/OR/NOT 연산)
+        if additional_queries:
+            for idx, add_query in enumerate(additional_queries):
+                operator = add_query.get('operator', 'and')  # and, or, not
+                params.append((f'b{idx}', operator))
+                params.append((f'weight{idx}', ''))
+                params.append(('si', add_query.get('si', 'TOTAL')))
+                params.append(('q', add_query.get('q', '')))
+            
+            # 마지막 weight 파라미터
+            last_weight_idx = len(additional_queries)
+            params.append((f'weight{last_weight_idx}', ''))
+        
+        # 자료유형 제한 (lmt0)
+        # material_types가 지정되지 않았으면 search_type에 따라 결정
+        if material_types is None:
+            if search_type == "books":
+                selected_material_types = ['m']  # 단행본
+            elif search_type == "articles":
+                selected_material_types = ['zart']  # 기사
+            elif search_type == "thesis":
+                selected_material_types = ['t']  # 학위논문
+            else:
+                selected_material_types = ['TOTAL']  # 전체
+        else:
+            selected_material_types = material_types
+        
+        # 자료유형 파라미터 구성 (HTML form 순서 반영)
+        # 순서: TOTAL, m(단행본), s(연속간행물), b;p;v;x;u;c(멀티미디어), t(학위논문), o(고서), zart(기사)
+        material_type_order = ['TOTAL', 'm', 's', 'b;p;v;x;u;c', 't', 'o', 'zart']
+        
+        # 첫 번째 _lmt0 (항상 on)
+        params.append(('_lmt0', 'on'))
+        params.append(('lmtsn', '000000000001'))
+        params.append(('lmtst', 'OR'))
+        
+        # 선택된 자료유형에 따라 파라미터 추가
+        for mat_type in material_type_order:
+            params.append(('_lmt0', 'on'))
+            if mat_type in selected_material_types:
+                params.append(('lmt0', mat_type))
+        
+        # 수록매체 제한 (inc)
+        params.append(('inc', 'TOTAL'))
+        for _ in range(6):
+            params.append(('_inc', 'on'))
+        
+        # 언어 제한 (lmt1)
+        params.append(('lmt1', 'TOTAL'))
+        params.append(('lmtsn', '000000000003'))
+        params.append(('lmtst', 'OR'))
+        
+        # 소장처 제한 (lmt2) - 신촌+국제
+        params.append(('lmt2', 'YNLIB;GSISL;MUSEL;OTHER;UGSTL;YSLIB;ARCHL;BUSIL;KORCL;IOKSL;LAWSL;MULTL;MATHL;MUSIC;UML'))
+        params.append(('lmtsn', '000000000006'))
+        params.append(('lmtst', 'OR'))
+        
+        # 발행년도 범위 설정
+        if year_from:
+            params.append(('rf', year_from))
+        if year_to:
+            params.append(('rt', year_to))
+        if year_from or year_to:
+            params.append(('range', '000000000021'))
+        
+        # 페이징 설정
+        params.append(('cpp', str(results_per_page)))  # 쪽당 출력 건수
+        params.append(('msc', '10000'))  # 최대 검색 건수
+        
+        # URL 파라미터 문자열 구성
+        param_string = "&".join([f"{k}={quote(str(v))}" for k, v in params])
         
         return f"{self.base_url}{endpoint}?{param_string}"
     
