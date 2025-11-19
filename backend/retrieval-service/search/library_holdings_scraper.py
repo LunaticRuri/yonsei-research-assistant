@@ -5,6 +5,7 @@ import logging
 from typing import List, Dict, Any, Optional, Literal
 from urllib.parse import urljoin, quote
 import asyncio
+import re
 import aiohttp
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
@@ -215,7 +216,7 @@ class LibraryHoldingsScraper:
         self.base_url = "https://library.yonsei.ac.kr"
         
         # 요청 간격 (윤리적 스크래핑)
-        self.request_delay = 0.5
+        self.request_delay = 1.0
         
         # 세션 설정
         self.session = requests.Session()
@@ -229,19 +230,20 @@ class LibraryHoldingsScraper:
     async def execute_holdings_search(
         self, 
         params: LibraryHoldingsSearchParams,
-        search_type: str = "integrated",
         max_results: int = 20
     ) -> List[Dict[str, Any]]:
         """
         도서관 통합검색 실행 (Pydantic 기반 인터페이스)
         
+        페이지네이션을 자동으로 처리하여 max_results만큼의 결과를 수집합니다.
+        _parse_holdings_search_results가 내부적으로 페이징을 처리합니다.
+        
         Args:
             params: LibrarySearchParams 객체로 구조화된 검색 파라미터
-            search_type: 검색 유형 (integrated, books, articles, thesis)
-            max_results: 최대 결과 수
+            max_results: 최대 결과 수 (페이지네이션 자동 처리)
         
         Returns:
-            검색 결과 리스트
+            검색 결과 리스트 (access_id 포함)
         
         Examples:
             # 간단한 검색
@@ -279,8 +281,8 @@ class LibraryHoldingsScraper:
         """
         
         try:
-            # 검색 URL 구성
-            search_url = self._build_holdings_search_url(params)
+            # 검색 URL 구성 (첫 페이지)
+            search_url = self._build_holdings_search_url(params, page=1)
             
             logger.info(f"Executing holdings search: {search_url}")
             
@@ -291,17 +293,22 @@ class LibraryHoldingsScraper:
             # 윤리적 지연
             await asyncio.sleep(self.request_delay)
             
-            # 결과 파싱
-            search_results = self._parse_holdings_search_results(response.text, search_type)
+            # 결과 파싱 (페이징 자동 처리)
+            search_results = await self._parse_holdings_search_results(
+                response.text,
+                max_result=max_results,
+                params=params  # 페이징을 위한 파라미터 전달
+            )
             
-            # 최대 결과 수 제한
-            limited_results = search_results[:max_results]
+            logger.info(f"Final result count: {len(search_results)} (requested: {max_results})")
             
+            logger.debug(search_results)
+        
             # 각 결과에 대해 상세 정보 수집
             detailed_results = []
-            for result in limited_results:
+            for result in search_results:
                 try:
-                    detailed_info = await self._get_detailed_info(result)
+                    detailed_info = await self._get_holdings_detailed_info(result)
                     detailed_results.append(detailed_info)
                     
                     # 요청 간 지연
@@ -317,12 +324,13 @@ class LibraryHoldingsScraper:
             logger.error(f"Library search failed: {e}")
             raise
     
-    def _build_holdings_search_url(self, params: LibraryHoldingsSearchParams) -> str:
+    def _build_holdings_search_url(self, params: LibraryHoldingsSearchParams, page: int = 1) -> str:
         """
         검색 URL 구성 (Pydantic 기반)
         
         Args:
             params: LibrarySearchParams 객체로 구조화된 검색 파라미터
+            page: 페이지 번호 (1부터 시작)
         
         Returns:
             str: 구성된 검색 URL
@@ -338,7 +346,7 @@ class LibraryHoldingsScraper:
             ...     year_range=YearRange(from_year=2020, to_year=2025),
             ...     results_per_page=100
             ... )
-            >>> url = scraper._build_holdings_search_url(params)
+            >>> url = scraper._build_holdings_search_url(params, page=2)
         """
         
         # 통합검색 결과 페이지 엔드포인트
@@ -406,226 +414,250 @@ class LibraryHoldingsScraper:
             if params.year_range.from_year or params.year_range.to_year:
                 url_params.append(('range', '000000000021'))
         
+        url_params.append(('oi', 'DISP06'))  # 정렬 기준 (출력순서: 출판년)
+        url_params.append(('os', 'DESC'))  # 정렬 방식 (내림차순)
+
         # 페이징 설정
+        url_params.append(('pn', str(page)))  # 페이지 번호 (1부터 시작)
         url_params.append(('cpp', str(params.results_per_page)))  # 쪽당 출력 건수
-        url_params.append(('msc', '10000'))  # 최대 검색 건수
+        url_params.append(('msc', '1000'))  # 최대 검색 건수
         
         # URL 파라미터 문자열 구성
         param_string = "&".join([f"{k}={quote(str(v))}" for k, v in url_params])
         
         return f"{self.base_url}{endpoint}?{param_string}"
     
-    def _parse_holdings_search_results(self, html_content: str, search_type: str) -> List[Dict[str, Any]]:
-        """검색 결과 파싱"""
+    async def _parse_holdings_search_results(
+        self,
+        html_content: str,
+        max_result: int = 100,
+        params: Optional[LibraryHoldingsSearchParams] = None
+    ) -> list:
+        """
+        검색 결과 파싱 - 페이징을 자동으로 처리하여 max_result만큼 결과를 수집
         
-        soup = BeautifulSoup(html_content, 'html.parser')
+        Args:
+            html_content: 첫 페이지의 검색 결과 HTML 내용
+            search_type: 검색 유형
+            max_result: 반환할 최대 결과 수
+            params: 페이징을 위한 검색 파라미터 (None이면 첫 페이지만 파싱)
+            
+        Returns:
+            검색 결과 리스트 (각 항목에 access_id 포함)
+        """
+        
         results = []
+        current_page = 1
+        current_html = html_content
+        total_results_available = None
         
-        # 검색 결과 항목 선택자 (실제 HTML 구조에 따라 조정 필요)
-        result_items = soup.select('.search-result-item, .list-item, .result-item')
-        
-        for item in result_items:
+        while len(results) < max_result:
+            soup = BeautifulSoup(current_html, 'html.parser')
+            
+            # 첫 페이지에서 전체 검색 결과 수 추출
+            if current_page == 1 and total_results_available is None:
+                search_cnt_list = soup.select('p.searchCnt strong')    
+                if search_cnt_list:
+                    try:
+                        # "총 271건 중 271건 출력"에서 두 번째 숫자 추출
+                        total_results_available = int(search_cnt_list[1].get_text(strip=True).replace(',',''))
+                        logger.info(f"Total results available: {total_results_available}")
+                        
+                        # 실제 가져올 수 있는 결과 수로 max_result 조정
+                        if total_results_available < max_result:
+                            logger.info(f"Adjusting max_result from {max_result} to {total_results_available}")
+                            max_result = total_results_available
+                    except (ValueError, AttributeError) as e:
+                        logger.warning(f"Failed to parse total result count: {e}")
+            
+            # 검색 결과 항목 찾기 - <li class="items"> 선택
+            result_items = soup.select('ul.resultList li.items')
+            
+            logger.info(f"Found {len(result_items)} result items on page {current_page}")
+            
+            # 현재 페이지에 결과가 없으면 중단
+            if not result_items:
+                logger.info(f"No more results found on page {current_page}")
+                break
+            
+            # 현재 페이지의 결과 수집
+            page_results_count = 0
+            for item in result_items:
+                try:
+                    # 각 li 항목의 id 속성에서 접근 ID 추출
+                    # 예: id="item_CATTOT000002202406" -> "CATTOT000002202406"
+                    item_id = item.get('id', '')
+                    if item_id.startswith('item_'):
+                        access_id = item_id.replace('item_', '')
+                    else:
+                        # id 속성이 없는 경우, checkbox value에서 추출
+                        checkbox = item.select_one('input[type="checkbox"][name="data"]')
+                        if checkbox:
+                            access_id = checkbox.get('value', '')
+                        else:
+                            logger.warning(f"Could not find access ID for item")
+                            continue
+                    
+                    results.append(access_id)
+                    page_results_count += 1
+                        
+                    # max_result 제한 체크
+                    if len(results) >= max_result:
+                        logger.info(f"Reached max_result limit: {max_result}")
+                        break
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to parse result item: {e}")
+                    continue
+            
+            logger.info(f"Collected {page_results_count} results from page {current_page}. Total: {len(results)}/{max_result}")
+            
+            # max_result에 도달했거나 params가 없으면 중단
+            if len(results) >= max_result or params is None:
+                break
+            
+            # 다음 페이지 가져오기
+            current_page += 1
+            next_url = self._build_holdings_search_url(params, page=current_page)
+            
+            logger.info(f"Fetching next page {current_page}: {next_url}")
+            
             try:
-                result = self._extract_result_info(item, search_type)
-                if result:
-                    results.append(result)
+                # 윤리적 지연
+                await asyncio.sleep(self.request_delay)
+                
+                response = self.session.get(next_url, timeout=30)
+                response.raise_for_status()
+                current_html = response.text
+                
             except Exception as e:
-                logger.warning(f"Failed to parse result item: {e}")
-                continue
+                logger.error(f"Failed to fetch page {current_page}: {e}")
+                break
         
         return results
     
-    def _extract_result_info(self, item_element, search_type: str) -> Optional[Dict[str, Any]]:
-        """개별 검색 결과 정보 추출"""
-        
-        try:
-            # 제목 추출
-            title_elem = item_element.select_one('.title, .item-title, h3, h4')
-            title = title_elem.get_text(strip=True) if title_elem else "제목 없음"
-            
-            # 저자 추출
-            author_elem = item_element.select_one('.author, .item-author, .creator')
-            authors = []
-            if author_elem:
-                author_text = author_elem.get_text(strip=True)
-                authors = [author.strip() for author in author_text.split(',')]
-            
-            # 출판 정보 추출
-            pub_elem = item_element.select_one('.publication, .pub-info, .publisher')
-            publication_info = pub_elem.get_text(strip=True) if pub_elem else ""
-            
-            # 연도 추출
-            year = self._extract_year(publication_info + " " + title)
-            
-            # 상세 링크 추출
-            link_elem = item_element.select_one('a[href]')
-            detail_link = ""
-            if link_elem:
-                href = link_elem.get('href')
-                detail_link = urljoin(self.base_url, href) if href else ""
-            
-            # 자료 유형 추출
-            type_elem = item_element.select_one('.type, .material-type, .format')
-            material_type = type_elem.get_text(strip=True) if type_elem else "기타"
-            
-            return {
-                "title": title,
-                "authors": authors,
-                "publication_info": publication_info,
-                "year": year,
-                "material_type": material_type,
-                "detail_link": detail_link,
-                "search_type": search_type
-            }
-            
-        except Exception as e:
-            logger.warning(f"Failed to extract result info: {e}")
-            return None
     
-    async def _get_detailed_info(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    async def _get_holdings_detailed_info(self, access_id: str) -> Dict[str, Any]:
         """검색 결과의 상세 정보 조회"""
         
-        if not result.get('detail_link'):
-            return result
+        url = f"{self.base_url}/search/detail/{access_id}"
         
+        result = {
+            "access_id": access_id,
+            "title": "",
+            "author": "",
+            "material_type": "",
+            "publication_info": "",
+            "publication_year": 0,
+            "isbn": "",
+            "book_description": "",
+            "detail_url": url
+        }
+
         try:
-            response = self.session.get(result['detail_link'], timeout=15)
+            response = self.session.get(url, timeout=15)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # 초록 추출
-            abstract_elem = soup.select_one('.abstract, .summary, .description')
-            abstract = abstract_elem.get_text(strip=True) if abstract_elem else ""
+            # 제목 추출 (profileHeader > h3)
+            title_elem = soup.select_one('.profileHeader h3')
+            if title_elem:
+                result["title"] = title_elem.get_text(strip=True)
             
-            # 키워드 추출
-            keywords_elem = soup.select_one('.keywords, .subjects, .tags')
-            keywords = []
-            if keywords_elem:
-                keyword_text = keywords_elem.get_text(strip=True)
-                keywords = [kw.strip() for kw in keyword_text.split(',')]
+            # 저자 추출 (profileHeader > p)
+            author_elem = soup.select_one('.profileHeader p')
+            if author_elem:
+                result["author"] = author_elem.get_text(strip=True)
             
-            # 소장 정보 추출
-            holdings = self._extract_holdings_info(soup)
+            # 상세 정보 테이블에서 추출
+            detail_table = soup.select_one('table#moreInfo')
+            if detail_table:
+                rows = detail_table.select('tr')
+                for row in rows:
+                    th = row.select_one('th')
+                    td = row.select_one('td')
+                    
+                    if not th or not td:
+                        continue
+                    
+                    field_name = th.get_text(strip=True)
+                    field_value = td.get_text(strip=True)
+                    
+                    # 자료유형 추출
+                    if field_name == "자료유형":
+                        result["material_type"] = field_value
+                    
+                    # 발행사항 추출
+                    elif field_name == "발행사항":
+                        result["publication_info"] = field_value
+                        # 발행년도 추출 및 추가
+                        try:
+                            year = self._extract_year(field_value)
+                            if year and year > 0:
+                                result["publication_year"] = year
+                                logger.debug(f"Found publication year for {access_id}: {year}")
+                        except Exception as e:
+                            logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
+                    
+                    # ISBN 추출
+                    elif field_name == "ISBN":
+                        result["isbn"] = field_value
             
-            # 원문 링크 추출
-            fulltext_elem = soup.select_one('.fulltext-link, .pdf-link, .online-access')
-            fulltext_link = ""
-            if fulltext_elem:
-                href = fulltext_elem.get('href')
-                fulltext_link = urljoin(self.base_url, href) if href else ""
+            # 책 소개 추출
+            descriptions = []
             
-            # 기존 결과에 상세 정보 추가
-            result.update({
-                "abstract": abstract[:500] + "..." if len(abstract) > 500 else abstract,
-                "keywords": keywords,
-                "holdings": holdings,
-                "fulltext_link": fulltext_link
-            })
+            # 모든 책 소개 섹션 찾기 (일반 책소개 + 출판사 제공 책소개)
+            book_intro_sections = soup.select('.searchInfo.mediaContents')
+            
+            for section in book_intro_sections:
+                # 먼저 전체 소개 (full) 찾기
+                full_description = section.select_one('.mediaContent div.full')
+                if full_description:
+                    # <br> 태그를 줄바꿈으로 변환
+                    for br in full_description.find_all('br'):
+                        br.replace_with('\n')
+                    desc_text = full_description.get_text(strip=True)
+                    if desc_text:
+                        descriptions.append(desc_text)
+                else:
+                    # full이 없으면 일반 p 태그나 brief 찾기
+                    description_elem = section.select_one('.mediaContent p, .mediaContent div.brief')
+                    if description_elem:
+                        # <br> 태그를 줄바꿈으로 변환
+                        for br in description_elem.find_all('br'):
+                            br.replace_with('\n')
+                        desc_text = description_elem.get_text(strip=True)
+                        if desc_text:
+                            descriptions.append(desc_text)
+            
+            # 모든 설명을 하나로 합치기 (중복 제거)
+            if descriptions:
+                # 중복된 설명 제거
+                unique_descriptions = []
+                for desc in descriptions:
+                    if desc not in unique_descriptions:
+                        unique_descriptions.append(desc)
+                result["book_description"] = "\n\n".join(unique_descriptions)
+            
+            logger.info(f"Extracted info for {access_id}: {result['title']}")
             
             return result
             
         except Exception as e:
-            logger.warning(f"Failed to get detailed info: {e}")
+            logger.warning(f"Failed to get detailed info for {access_id}: {e}")
             return result
-    
-    async def _get_holdings_detail(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """소장 정보 상세 조회"""
-        
-        holdings = result.get('holdings', {})
-        
-        # 기본 소장 정보가 없으면 Mock 데이터 생성
-        if not holdings:
-            return self._generate_mock_holdings()
-        
-        return holdings
-    
-    def _extract_holdings_info(self, soup: BeautifulSoup) -> Dict[str, Any]:
-        """소장 정보 추출"""
-        
-        holdings = {
-            "locations": [],
-            "status": "available",
-            "loan_status": "대출 가능",
-            "access_type": "physical"
-        }
-        
-        # 소장 위치 추출
-        location_elems = soup.select('.location, .library-location, .holdings-location')
-        for loc_elem in location_elems:
-            location_text = loc_elem.get_text(strip=True)
-            if location_text:
-                holdings["locations"].append(location_text)
-        
-        # 대출 상태 추출
-        status_elem = soup.select_one('.status, .availability, .loan-status')
-        if status_elem:
-            status_text = status_elem.get_text(strip=True)
-            holdings["loan_status"] = status_text
-            
-            # 상태에 따른 가용성 판단
-            if any(keyword in status_text for keyword in ["대출중", "이용불가", "분실"]):
-                holdings["status"] = "unavailable"
-        
-        # 온라인 접근 여부 확인
-        online_elem = soup.select_one('.online-access, .electronic-resource, .e-resource')
-        if online_elem:
-            holdings["access_type"] = "electronic"
-            holdings["loan_status"] = "온라인 이용 가능"
-        
-        return holdings
-    
-    def _generate_access_info(self, holdings: Dict[str, Any]) -> str:
-        """접근 정보 생성"""
-        
-        access_type = holdings.get("access_type", "physical")
-        locations = holdings.get("locations", [])
-        loan_status = holdings.get("loan_status", "")
-        
-        if access_type == "electronic":
-            return "✅ 전자 저널 원문 이용 가능"
-        elif locations:
-            location_str = ", ".join(locations[:2])  # 최대 2개 위치만 표시
-            return f"📚 {location_str} - {loan_status}"
-        else:
-            return f"📖 {loan_status}"
-    
-    def _generate_mock_holdings(self) -> Dict[str, Any]:
-        """Mock 소장 정보 생성"""
-        import random
-        
-        mock_locations = [
-            "중앙도서관 3층",
-            "학술정보원 2층", 
-            "과학도서관 1층",
-            "의학도서관"
-        ]
-        
-        mock_statuses = [
-            "대출 가능",
-            "대출중",
-            "온라인 이용 가능"
-        ]
-        
-        return {
-            "locations": [random.choice(mock_locations)],
-            "status": "available",
-            "loan_status": random.choice(mock_statuses),
-            "access_type": random.choice(["physical", "electronic"])
-        }
     
     def _extract_year(self, text: str) -> int:
         """텍스트에서 연도 추출"""
-        import re
         
         # 4자리 연도 패턴 찾기
-        year_pattern = r'\b(19|20)\d{2}\b'
+        year_pattern = r'\b(?:19|20)\d{2}\b'
         matches = re.findall(year_pattern, text)
         
         if matches:
             # 가장 최근 연도 반환
-            years = [int(match + m[2:]) for match, m in re.findall(r'\b(19|20)(\d{2})\b', text)]
-            return max(years) if years else 0
+            return max(map(int, matches))
         
         return 0
     
