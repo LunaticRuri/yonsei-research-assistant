@@ -15,6 +15,8 @@ from library_holdings_scraper import (
     AdditionalQuery,
     YearRange
 )
+from electronic_resource_scraper import ElectronicResourceScraper
+from shared.models import ElectronicResourceInfo
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,9 @@ async def example_1_simple_search():
         
         print(f"검색 결과: {len(results)}건")
         for i, result in enumerate(results, 1):
-            print(f"{i}. {result.title or 'N/A'}")
+            # print(f"{i}. {result.title or 'N/A'}")
+            print(f"===== {i} =====")
+            print(result.model_dump_json(indent=2))
 
 
 async def example_2_advanced_search():
@@ -175,28 +179,35 @@ async def example_6_validation():
     print("\n모든 검증 테스트 통과!")
 
 
+async def example_7_electronic_resource_search():
+    """예시 7: 전자자료(논문, E-Book 등) 검색"""
+    print("\n=== 예시 7: 전자자료 검색 (논문/전자책) ===")
+    async with ElectronicResourceScraper() as scraper:
+        params = LibraryHoldingsSearchParams(
+            query="인공지능",
+            results_per_page=10
+        )
+        results = await scraper.execute_electronic_search(params, max_results=3)
+        print(f"전자자료 검색 결과: {len(results)}건")
+        for i, result in enumerate(results, 1):
+            print(f"{i}. {result.title or 'N/A'} | {result.resource_type or 'N/A'} | {result.link_url or 'N/A'}")
+
 async def main():
     """모든 예시 실행"""
     print("=" * 60)
     print("LibrarySearchParams 사용 예시")
     print("=" * 60)
-    
-    # 간단한 예시만 실행 (실제 웹 요청은 하지 않음)
     try:
-        # 예시 6은 웹 요청 없이 검증만 수행
         await example_6_validation()
-        
         print("\n" + "=" * 60)
         print("주의: 나머지 예시는 실제 도서관 웹사이트에 요청을 보냅니다.")
         print("=" * 60)
-        
-        # 실제 웹 요청을 하는 예시들
         await example_1_simple_search()
         # await example_2_advanced_search()
         # await example_3_field_specific_search()
         # await example_4_material_type_filter()
         # await example_5_complex_query()
-        
+        # await example_7_electronic_resource_search()
     except Exception as e:
         print(f"오류 발생: {e}")
 

@@ -15,10 +15,11 @@ import os
 # 현재위치(search) -> 상위(retrieval-service) -> 상위(backend) -> 상위(루트)
 # TODO: 나중에 지우기
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, "../../../")) # 3단계 상위로 이동
-sys.path.append(project_root)
+service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 3단계 상위로 이동
+sys.path.append(service_root)
 
-from backend.shared.models import LibraryHoldingInfo
+from shared.models import LibraryHoldingInfo
+from base_scraper import BaseLibraryScraper
 
 logger = logging.getLogger(__name__)
 
@@ -219,41 +220,11 @@ class LibraryHoldingsSearchParams(BaseModel):
     }
 
 
-class LibraryHoldingsScraper:
-    """연세대학교 도서관 웹사이트 스크래핑"""
+class LibraryHoldingsScraper(BaseLibraryScraper):
+    """연세대학교 도서관 소장자료(단행본 등) 스크래핑"""
     
     def __init__(self):
-        self.base_url = "https://library.yonsei.ac.kr"
-        
-        # 요청 간격 (윤리적 스크래핑)
-        self.request_delay = 1.0
-        
-        # 세션 설정
-        self.session: Optional[aiohttp.ClientSession] = None
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br'
-        }
-
-    async def _get_session(self) -> aiohttp.ClientSession:
-        """aiohttp 세션 가져오기 또는 생성"""
-        if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(headers=self.headers)
-        return self.session
-
-    async def close(self):
-        """세션 종료"""
-        if self.session and not self.session.closed:
-            await self.session.close()
-
-    async def __aenter__(self):
-        await self._get_session()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        super().__init__()
     
     async def execute_holdings_search(
         self, 
@@ -324,7 +295,7 @@ class LibraryHoldingsScraper:
             # 윤리적 지연
             await asyncio.sleep(self.request_delay)
             
-            # 결과 파싱 (페이징 자동 처리)
+            # 검색 결과 파싱 (페이징 자동 처리)
             search_results = await self._parse_holdings_search_results(
                 html_content,
                 max_result=max_results,
@@ -567,7 +538,6 @@ class LibraryHoldingsScraper:
                 break
         
         return results
-    
     
     async def _get_holdings_detailed_info(self, access_id: str) -> LibraryHoldingInfo:
         """검색 결과의 상세 정보 조회"""
