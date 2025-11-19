@@ -1,4 +1,4 @@
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
 import time
 import logging
@@ -6,9 +6,19 @@ from typing import List, Dict, Any, Optional, Literal
 from urllib.parse import urljoin, quote
 import asyncio
 import re
-import aiohttp
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
+import sys
+import os
+
+# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
+# 현재위치(search) -> 상위(retrieval-service) -> 상위(backend) -> 상위(루트)
+# TODO: 나중에 지우기
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, "../../../")) # 3단계 상위로 이동
+sys.path.append(project_root)
+
+from backend.shared.models import LibraryHoldingInfo
 
 logger = logging.getLogger(__name__)
 
@@ -219,19 +229,37 @@ class LibraryHoldingsScraper:
         self.request_delay = 1.0
         
         # 세션 설정
-        self.session = requests.Session()
-        self.session.headers.update({
+        self.session: Optional[aiohttp.ClientSession] = None
+        self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br'
-        })
+        }
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """aiohttp 세션 가져오기 또는 생성"""
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession(headers=self.headers)
+        return self.session
+
+    async def close(self):
+        """세션 종료"""
+        if self.session and not self.session.closed:
+            await self.session.close()
+
+    async def __aenter__(self):
+        await self._get_session()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
     
     async def execute_holdings_search(
         self, 
         params: LibraryHoldingsSearchParams,
         max_results: int = 20
-    ) -> List[Dict[str, Any]]:
+    ) -> List[LibraryHoldingInfo]:
         """
         도서관 통합검색 실행 (Pydantic 기반 인터페이스)
         
@@ -281,21 +309,24 @@ class LibraryHoldingsScraper:
         """
         
         try:
+            session = await self._get_session()
+            
             # 검색 URL 구성 (첫 페이지)
             search_url = self._build_holdings_search_url(params, page=1)
             
             logger.info(f"Executing holdings search: {search_url}")
             
             # 검색 요청
-            response = self.session.get(search_url, timeout=30)
-            response.raise_for_status()
+            async with session.get(search_url, timeout=30) as response:
+                response.raise_for_status()
+                html_content = await response.text()
             
             # 윤리적 지연
             await asyncio.sleep(self.request_delay)
             
             # 결과 파싱 (페이징 자동 처리)
             search_results = await self._parse_holdings_search_results(
-                response.text,
+                html_content,
                 max_result=max_results,
                 params=params  # 페이징을 위한 파라미터 전달
             )
@@ -526,9 +557,10 @@ class LibraryHoldingsScraper:
                 # 윤리적 지연
                 await asyncio.sleep(self.request_delay)
                 
-                response = self.session.get(next_url, timeout=30)
-                response.raise_for_status()
-                current_html = response.text
+                session = await self._get_session()
+                async with session.get(next_url, timeout=30) as response:
+                    response.raise_for_status()
+                    current_html = await response.text()
                 
             except Exception as e:
                 logger.error(f"Failed to fetch page {current_page}: {e}")
@@ -537,38 +569,37 @@ class LibraryHoldingsScraper:
         return results
     
     
-    async def _get_holdings_detailed_info(self, access_id: str) -> Dict[str, Any]:
+    async def _get_holdings_detailed_info(self, access_id: str) -> LibraryHoldingInfo:
         """검색 결과의 상세 정보 조회"""
         
         url = f"{self.base_url}/search/detail/{access_id}"
         
-        result = {
-            "access_id": access_id,
-            "title": "",
-            "author": "",
-            "material_type": "",
-            "publication_info": "",
-            "publication_year": 0,
-            "isbn": "",
-            "book_description": "",
-            "detail_url": url
-        }
+        # 기본값으로 초기화
+        title = ""
+        author = ""
+        material_type = ""
+        publication_info = ""
+        publication_year = 0
+        isbn = ""
+        book_description = ""
 
         try:
-            response = self.session.get(url, timeout=15)
-            response.raise_for_status()
+            session = await self._get_session()
+            async with session.get(url, timeout=15) as response:
+                response.raise_for_status()
+                html_content = await response.text()
             
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(html_content, 'html.parser')
             
             # 제목 추출 (profileHeader > h3)
             title_elem = soup.select_one('.profileHeader h3')
             if title_elem:
-                result["title"] = title_elem.get_text(strip=True)
+                title = title_elem.get_text(strip=True)
             
             # 저자 추출 (profileHeader > p)
             author_elem = soup.select_one('.profileHeader p')
             if author_elem:
-                result["author"] = author_elem.get_text(strip=True)
+                author = author_elem.get_text(strip=True)
             
             # 상세 정보 테이블에서 추출
             detail_table = soup.select_one('table#moreInfo')
@@ -586,23 +617,23 @@ class LibraryHoldingsScraper:
                     
                     # 자료유형 추출
                     if field_name == "자료유형":
-                        result["material_type"] = field_value
+                        material_type = field_value
                     
                     # 발행사항 추출
                     elif field_name == "발행사항":
-                        result["publication_info"] = field_value
+                        publication_info = field_value
                         # 발행년도 추출 및 추가
                         try:
                             year = self._extract_year(field_value)
                             if year and year > 0:
-                                result["publication_year"] = year
+                                publication_year = year
                                 logger.debug(f"Found publication year for {access_id}: {year}")
                         except Exception as e:
                             logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
                     
                     # ISBN 추출
                     elif field_name == "ISBN":
-                        result["isbn"] = field_value
+                        isbn = field_value
             
             # 책 소개 추출
             descriptions = []
@@ -638,21 +669,44 @@ class LibraryHoldingsScraper:
                 for desc in descriptions:
                     if desc not in unique_descriptions:
                         unique_descriptions.append(desc)
-                result["book_description"] = "\n\n".join(unique_descriptions)
+                book_description = "\n\n".join(unique_descriptions)
             
-            logger.info(f"Extracted info for {access_id}: {result['title']}")
+            logger.info(f"Extracted info for {access_id}: {title}")
             
-            return result
+            # Pydantic 모델로 반환
+            return LibraryHoldingInfo(
+                access_id=access_id,
+                title=title,
+                author=author,
+                material_type=material_type,
+                publication_info=publication_info,
+                publication_year=publication_year,
+                isbn=isbn,
+                book_description=book_description,
+                detail_url=url
+            )
             
         except Exception as e:
             logger.warning(f"Failed to get detailed info for {access_id}: {e}")
-            return result
+            # 에러 발생 시 기본값으로 모델 반환
+            return LibraryHoldingInfo(
+                access_id=access_id,
+                title="",
+                author="",
+                material_type="",
+                publication_info="",
+                publication_year=0,
+                isbn="",
+                book_description="",
+                detail_url=url
+            )
     
     def _extract_year(self, text: str) -> int:
         """텍스트에서 연도 추출"""
         
-        # 4자리 연도 패턴 찾기
-        year_pattern = r'\b(?:19|20)\d{2}\b'
+        # 4자리 연도 패턴 찾기 (숫자가 아닌 문자로 둘러싸인 19xx 또는 20xx)
+        # 예: "2023", "c2023", "(2023)", "2023." 등
+        year_pattern = r'(?<!\d)(?:19|20)\d{2}(?!\d)'
         matches = re.findall(year_pattern, text)
         
         if matches:
@@ -660,8 +714,3 @@ class LibraryHoldingsScraper:
             return max(map(int, matches))
         
         return 0
-    
-    def __del__(self):
-        """소멸자: 세션 정리"""
-        if hasattr(self, 'session'):
-            self.session.close()
