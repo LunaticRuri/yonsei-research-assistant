@@ -209,8 +209,30 @@ class ElectronicSearchParams(BaseModel):
 class ElectronicResourceScraper(BaseLibraryScraper):
     """전자자료(학술논문, E-Journal 등) 전용 스크래퍼"""
 
-    def __init__(self):
+    def __init__(self, user_id: str = None, user_pw: str = None):
         super().__init__()
+        self.user_id = user_id
+        self.user_pw = user_pw
+        self.is_logged_in = False
+
+    async def __aenter__(self):
+        """
+        async with 구문에 진입할 때 호출됨.
+        여기서 세션을 열고 + 로그인을 수행함.
+        """
+        # 1. 부모의 __aenter__ 호출 (세션 생성)
+        await super().__aenter__()
+        
+        # 2. 아이디/비번이 있으면 로그인 시도
+        if self.user_id and self.user_pw:
+            success = await self.perform_login(self.user_id, self.user_pw)
+            if not success:
+                logger.error("Auto-login failed during initialization.")
+                raise Exception("Login Failed") # 로그인이 필수라면 여기서 에러를 발생시켜서 진행을 막을 수 있음
+            else:
+                self.is_logged_in = True
+        
+        return self
 
     async def execute_electronic_search(
         self, 
@@ -490,4 +512,4 @@ class ElectronicResourceScraper(BaseLibraryScraper):
             # 가장 최근 연도 반환
             return max(map(int, matches))
         
-        return 0
+        return 0    
