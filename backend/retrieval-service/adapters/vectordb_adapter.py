@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
-from .base_adapter import BaseRetriever
-from shared.models import Document
+from .base_adapters import BaseRetriever
+from shared.models import Document, SearchRequest
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -19,23 +19,18 @@ class VectorDBAdapter(BaseRetriever):
     
     async def search(
         self, 
-        query: str, 
-        filters: Dict[str, Any] = None,
+        request: SearchRequest,
         top_k: int = 10
     ) -> List[Document]:
         """
         벡터 유사도 검색
-        
-        filters 예시 (Self-Query 결과):
-        {
-            'category': 'computer_science',
-            'year': {'$gte': 2020},
-            'language': 'en'
-        }
         """
         try:
+            # SearchRequest에서 첫 번째 쿼리 사용 (multi-query는 RetrieverService에서 처리)
+            query_text = request.queries[0][0] if request.queries else request.user_query
+            
             # 1. 쿼리 임베딩
-            query_vector = self.encoder.encode([query])[0]
+            query_vector = self.encoder.encode([query_text])[0]
             query_vector = np.array([query_vector], dtype='float32')
             
             # 2. FAISS 검색 (top_k * 2로 오버페칭, 필터링 후 부족할 수 있음)
@@ -50,7 +45,7 @@ class VectorDBAdapter(BaseRetriever):
                 metadata = self.metadata_store.get(int(idx), {})
                 
                 # 필터 적용 (Self-Query 조건 검증)
-                if filters and not self._match_filters(metadata, filters):
+                if request.filters and not self._match_filters(metadata, request.filters):
                     continue
                 
                 doc = Document(

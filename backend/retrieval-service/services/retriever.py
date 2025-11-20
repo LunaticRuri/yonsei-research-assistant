@@ -1,6 +1,11 @@
 from typing import List, Dict
-from adapters import BaseRetriever, LibraryAdapter, VectorDBAdapter
-from shared.models import Document, SearchRequest
+from adapters import (
+    BaseRetriever, 
+    ElectronicResourcesAdapter, 
+    LibraryHoldingsAdapter, 
+    VectorDBAdapter
+)
+from shared.models import Document, SearchRequest, RetrievalRoute
 from config import settings
 import asyncio
 import logging
@@ -10,9 +15,10 @@ class RetrieverService:
     
     def __init__(self):
         # 사용 가능한 어댑터 등록
-        self.adapters: Dict[str, BaseRetriever] = {
-            'yonsei_library': LibraryAdapter(),
-            'vector_db': VectorDBAdapter(
+        self.adapters: Dict[RetrievalRoute, BaseRetriever] = {
+            RetrievalRoute.YONSEI_HOLDINGS: LibraryHoldingsAdapter(),
+            RetrievalRoute.YONSEI_ELECTRONICS: ElectronicResourcesAdapter(),
+            RetrievalRoute.VECTOR_DB: VectorDBAdapter(
                 index_path=settings.FAISS_INDEX_PATH,
                 embedding_model=settings.VECTOR_EMBEDDING_MODEL
             )
@@ -36,19 +42,16 @@ class RetrieverService:
                 self.logger.warning(f"Unknown route: {route}")
                 continue
             
-            # Multi-query 각각 실행
-            for query in request.queries:
-                tasks.append(
-                    self._search_with_metadata(
-                        adapter=adapter,
-                        query=query,
-                        filters=request.filters,
-                        top_k=request.top_k,
-                        route=route
-                    )
+            tasks.append(
+                self._retrieve_process(
+                    adapter=adapter,
+                    request=request,
+                    route=route
                 )
+            )
         
         # 병렬 실행
+        # NOTE: 혹시 연세대학교 로그인-로그아웃 겹침 문제로 작동 안되면 직렬로 바꾸기
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
         # 결과 수집
@@ -65,28 +68,27 @@ class RetrieverService:
         
         return all_documents
     
-    async def _search_with_metadata(
+    async def _retrieve_process(
         self,
         adapter: BaseRetriever,
-        query: str,
-        filters: Dict,
-        top_k: int,
-        route: str
+        request: SearchRequest,
+        route: RetrievalRoute
     ) -> List[Document]:
         """단일 검색 + 메타데이터 보강"""
         try:
-            docs = await adapter.search(query, filters, top_k)
+            search_params = await adapter.request_to_search_params_by_llm(request)
+            docs = await adapter.search(search_params)
             
             # 소스 정보 추가 (나중에 Fusion에서 사용)
+            # FIXME: adapter 내부에서 처리하는 게 맞지 않나?
             for doc in docs:
-                doc.metadata['search_query'] = query
-                doc.metadata['data_source'] = route
+                doc.metadata['retrieval_source'] = route
             
             return docs
             
         except Exception as e:
             self.logger.error(
-                f"Search failed [adapter={route}, query={query}]: {e}"
+                f"Search failed [adapter={route}, request={request}]: {e}"
             )
             return []
     

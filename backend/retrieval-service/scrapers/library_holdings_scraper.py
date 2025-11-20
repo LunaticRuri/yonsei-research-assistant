@@ -19,6 +19,7 @@ sys.path.append(service_root)
 
 from shared.models import LibraryHoldingInfo
 from base_scraper import BaseLibraryScraper
+from search_params import BaseSearchParams, QueryOperator, YearRange, AdditionalQuery
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,8 @@ logger = logging.getLogger(__name__)
 # Pydantic Models for Library Search Parameters
 # ============================================================================
 
-class SearchField(str, Enum):
-    """검색 필드 타입"""
+class LibrarySearchField(str, Enum):
+    """검색 필드 타입 (도서관 소장자료 전용)"""
     TOTAL = "TOTAL"  # 전체
     TITLE = "1"  # 서명(책제목)
     AUTHOR = "2"  # 저자
@@ -37,7 +38,7 @@ class SearchField(str, Enum):
 
 
 class MaterialType(str, Enum):
-    """자료 유형"""
+    """자료 유형 (도서관 소장자료만)"""
     TOTAL = "TOTAL"  # 전체
     BOOK = "m"  # 단행본
     SERIAL = "s"  # 연속간행물
@@ -47,97 +48,28 @@ class MaterialType(str, Enum):
     ARTICLE = "zart"  # 기사
 
 
-class QueryOperator(str, Enum):
-    """검색 연산자"""
-    AND = "and"
-    OR = "or"
-    NOT = "not"
-
-
-class AdditionalQuery(BaseModel):
-    """추가 검색 조건"""
-    search_field: SearchField = Field(
-        default=SearchField.TOTAL,
-        description="검색할 필드 (전체, 서명, 저자, 출판사, 주제어)"
-    )
-    query: str = Field(
-        ...,
-        min_length=1,
-        description="검색어"
-    )
-    operator: QueryOperator = Field(
-        default=QueryOperator.AND,
-        description="이전 검색어와의 연산자 (AND, OR, NOT)"
-    )
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "search_field": "AUTHOR",
-                    "query": "김철수",
-                    "operator": "AND"
-                }
-            ]
-        }
-    }
-
-
-class YearRange(BaseModel):
-    """발행 연도 범위"""
-    from_year: Optional[int] = Field(
-        default=None,
-        ge=1900,
-        le=2100,
-        description="시작 연도"
-    )
-    to_year: Optional[int] = Field(
-        default=None,
-        ge=1900,
-        le=2100,
-        description="종료 연도"
-    )
-    
-    @field_validator('to_year')
-    @classmethod
-    def validate_year_range(cls, v, info):
-        """종료 연도가 시작 연도보다 크거나 같은지 검증"""
-        if v is not None and info.data.get('from_year') is not None:
-            if v < info.data['from_year']:
-                raise ValueError('종료 연도는 시작 연도보다 크거나 같아야 합니다')
-        return v
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {"from_year": 2020, "to_year": 2025}
-            ]
-        }
-    }
-
-
-class LibraryHoldingsSearchParams(BaseModel):
+class LibraryHoldingsSearchParams(BaseSearchParams):
     """도서관 검색 파라미터
     
     Examples:
         # 간단한 검색
-        >>> params = LibrarySearchParams(
+        >>> params = LibraryHoldingsSearchParams(
         ...     query="휴대폰",
         ...     additional_queries=[
-        ...         AdditionalQuery(query="스마트폰", operator=QueryOperator.OR),
-        ...         AdditionalQuery(query="아이폰", operator=QueryOperator.NOT)
+        ...         AdditionalQuery(search_field=LibrarySearchField.TOTAL, query="스마트폰", operator=QueryOperator.OR),
+        ...         AdditionalQuery(search_field=LibrarySearchField.TOTAL, query="아이폰", operator=QueryOperator.NOT)
         ...     ],
         ...     year_range=YearRange(from_year=2020, to_year=2025),
         ...     results_per_page=100
         ... )
         
         # 필드별 검색
-        >>> params = LibrarySearchParams(
+        >>> params = LibraryHoldingsSearchParams(
         ...     query="휴대폰",
-        ...     search_field=SearchField.TITLE,
+        ...     search_field=LibrarySearchField.TITLE,
         ...     additional_queries=[
         ...         AdditionalQuery(
-        ...             search_field=SearchField.AUTHOR,
+        ...             search_field=LibrarySearchField.AUTHOR,
         ...             query="김철수",
         ...             operator=QueryOperator.AND
         ...         )
@@ -145,42 +77,30 @@ class LibraryHoldingsSearchParams(BaseModel):
         ... )
         
         # 자료 유형 선택
-        >>> params = LibrarySearchParams(
+        >>> params = LibraryHoldingsSearchParams(
         ...     query="휴대폰",
         ...     material_types=[MaterialType.SERIAL, MaterialType.THESIS]
         ... )
     """
     
-    # 필수 파라미터
-    query: str = Field(
-        ...,
-        min_length=1,
-        description="주 검색어"
-    )
-    
-    # 검색 옵션
-    search_field: SearchField = Field(
-        default=SearchField.TOTAL,
+    # 검색 옵션 (도서관 소장자료 전용)
+    search_field: LibrarySearchField = Field(
+        default=LibrarySearchField.TOTAL,
         description="주 검색어의 검색 필드"
     )
     
-    # 추가 검색 조건
-    additional_queries: List[AdditionalQuery] = Field(
+    # 추가 검색 조건 (도서관 소장자료 전용 필드 사용)
+    additional_queries: List[AdditionalQuery[LibrarySearchField]] = Field(
         default_factory=list,
         max_length=10,
         description="추가 검색 조건 (최대 10개)"
     )
     
-    # 필터링 옵션
+    # 필터링 옵션 (도서관 소장자료만)
     material_types: List[MaterialType] = Field(
         default=[MaterialType.TOTAL],
         min_length=1,
         description="검색할 자료 유형 (여러 개 선택 가능)"
-    )
-    
-    year_range: Optional[YearRange] = Field(
-        default=None,
-        description="발행 연도 범위"
     )
     
     # 페이징 옵션

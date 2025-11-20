@@ -1,30 +1,34 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-from shared.models import Document
+from shared.models import Document, SearchRequest
 
 class BaseRetriever(ABC):
     """모든 검색 어댑터가 구현해야 하는 인터페이스"""
     
     @abstractmethod
-    async def search(
-        self, 
-        query: str, 
-        filters: Dict[str, Any] = None,
-        top_k: int = 10
-    ) -> List[Document]:
+    async def request_to_search_params_by_llm(self, request: SearchRequest) -> Any:
+        """
+        LLM 기반으로 SearchRequest를 어댑터별 검색 파라미터 객체로 변환
+        
+        Args:
+            request (SearchRequest): 통합 검색 요청 객체
+        Returns:
+            Any: 어댑터별로 정의된 검색 파라미터 객체
+        """
+        pass
+
+    @abstractmethod
+    async def search(self, search_params) -> List[Document]:
         """
         통일된 검색 메서드
         
         Args:
-            query: 검색 쿼리 (자연어 또는 키워드)
-            filters: 데이터 소스별 필터 (예: 발행연도, 저자 등)
-            top_k: 반환할 최대 문서 수
-            
+            search_params : 각 어댑터별로 변환된 검색 파라미터 객체
         Returns:
             List[Document]: 표준화된 Document 객체 리스트
         """
         pass
-    
+
     @abstractmethod
     async def health_check(self) -> bool:
         """데이터 소스 연결 상태 확인"""

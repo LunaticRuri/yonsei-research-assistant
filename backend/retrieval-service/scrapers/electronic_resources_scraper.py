@@ -18,6 +18,7 @@ sys.path.append(service_root)
 from shared.models import ElectronicResourceInfo
 from base_scraper import BaseLibraryScraper
 from urllib.parse import urljoin, urlparse, parse_qs, unquote
+from search_params import BaseSearchParams, QueryOperator, YearRange, AdditionalQuery
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ logger = logging.getLogger(__name__)
 # Pydantic Models for Electronic Resource Search Parameters
 # ============================================================================
 
-class SearchField(str, Enum):
-    """검색 필드 타입 (전자자료용)"""
+class ElectronicSearchField(str, Enum):
+    """검색 필드 타입 (전자자료 전용)"""
     KEYWORD = "TX"  # 키워드
     TOTAL = ""      # 전체
     TITLE = "TI"     # 제목
@@ -35,76 +36,7 @@ class SearchField(str, Enum):
     SUBJECT = "SU"  # 주제어
 
 
-class QueryOperator(str, Enum):
-    """검색 연산자"""
-    AND = "and"
-    OR = "or"
-    NOT = "not"
-
-
-class AdditionalQuery(BaseModel):
-    """추가 검색 조건"""
-    search_field: SearchField = Field(
-        default=SearchField.TOTAL,
-        description="검색할 필드 (키워드, 전체, 제목, 저자, 주제어)"
-    )
-    query: str = Field(
-        ...,
-        min_length=1,
-        description="검색어"
-    )
-    operator: QueryOperator = Field(
-        default=QueryOperator.AND,
-        description="이전 검색어와의 연산자 (AND, OR, NOT)"
-    )
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "search_field": "AUTHOR",
-                    "query": "김철수",
-                    "operator": "AND"
-                }
-            ]
-        }
-    }
-
-
-class YearRange(BaseModel):
-    """발행 연도 범위"""
-    from_year: Optional[int] = Field(
-        default=None,
-        ge=1900,
-        le=2100,
-        description="시작 연도"
-    )
-    to_year: Optional[int] = Field(
-        default=None,
-        ge=1900,
-        le=2100,
-        description="종료 연도"
-    )
-    
-    @field_validator('to_year')
-    @classmethod
-    def validate_year_range(cls, v, info):
-        """종료 연도가 시작 연도보다 크거나 같은지 검증"""
-        if v is not None and info.data.get('from_year') is not None:
-            if v < info.data['from_year']:
-                raise ValueError('종료 연도는 시작 연도보다 크거나 같아야 합니다')
-        return v
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {"from_year": 2020, "to_year": 2025}
-            ]
-        }
-    }
-
-
-class ElectronicSearchParams(BaseModel):
+class ElectronicSearchParams(BaseSearchParams):
     """전자자료 검색 파라미터
     
     Examples:
@@ -112,8 +44,8 @@ class ElectronicSearchParams(BaseModel):
         >>> params = ElectronicSearchParams(
         ...     query="machine learning",
         ...     additional_queries=[
-        ...         AdditionalQuery(query="deep learning", operator=QueryOperator.OR),
-        ...         AdditionalQuery(query="reinforcement learning", operator=QueryOperator.OR)
+        ...         AdditionalQuery(search_field=ElectronicSearchField.TOTAL, query="deep learning", operator=QueryOperator.OR),
+        ...         AdditionalQuery(search_field=ElectronicSearchField.TOTAL, query="reinforcement learning", operator=QueryOperator.OR)
         ...     ],
         ...     year_range=YearRange(from_year=2020, to_year=2025),
         ...     results_per_page=50
@@ -122,10 +54,10 @@ class ElectronicSearchParams(BaseModel):
         # 필드별 검색
         >>> params = ElectronicSearchParams(
         ...     query="artificial intelligence",
-        ...     search_field=SearchField.TITLE,
+        ...     search_field=ElectronicSearchField.TITLE,
         ...     additional_queries=[
         ...         AdditionalQuery(
-        ...             search_field=SearchField.AUTHOR,
+        ...             search_field=ElectronicSearchField.AUTHOR,
         ...             query="Hinton",
         ...             operator=QueryOperator.AND
         ...         )
@@ -133,30 +65,17 @@ class ElectronicSearchParams(BaseModel):
         ... )
     """
     
-    # 필수 파라미터
-    query: str = Field(
-        ...,
-        min_length=1,
-        description="주 검색어"
-    )
-    
-    # 검색 옵션
-    search_field: SearchField = Field(
-        default=SearchField.TOTAL,
+    # 검색 옵션 (전자자료 전용)
+    search_field: ElectronicSearchField = Field(
+        default=ElectronicSearchField.TOTAL,
         description="주 검색어의 검색 필드"
     )
     
-    # 추가 검색 조건
-    additional_queries: List[AdditionalQuery] = Field(
+    # 추가 검색 조건 (전자자료 전용 필드 사용)
+    additional_queries: List[AdditionalQuery[ElectronicSearchField]] = Field(
         default_factory=list,
         max_length=10,
         description="추가 검색 조건 (최대 10개)"
-    )
-    
-    # 필터링 옵션
-    year_range: Optional[YearRange] = Field(
-        default=None,
-        description="발행 연도 범위"
     )
     
     # 페이징 옵션

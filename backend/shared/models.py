@@ -50,9 +50,9 @@ class RoutingDecision(BaseModel):
 # ===== Strategy → Retrieval 요청 =====
 class QueryOperator(str, Enum):
     """검색 연산자"""
-    AND = "and"
-    OR = "or"
-    NOT = "not"
+    AND = "and" # 필수
+    OR = "or"  # 선택
+    NOT = "not" # 제외
 
 class RetrievalRoute(str, Enum):
     """검색 소스"""
@@ -60,21 +60,39 @@ class RetrievalRoute(str, Enum):
     YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
     YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
 
+class queryTuple(BaseModel):
+    query: str
+    search_field: str # e.g., "TITLE", "AUTHOR", "SUBJECT" 아무거나 됨. 어차피 LLM이 처리할 것.
+    operator: QueryOperator
+
 class SearchRequest(BaseModel):
-    """Strategy Service가 Retrieval Service에 보내는 검색 요청"""
+    """
+    Strategy Service가 Retrieval Service에 전달하는 구조화된 검색 명세
+    """
     
     # TODO: 서비스 사이 전달 부분이니 논의 필요
-    # 일단 상정한 방법은 아래와 같음
-    # 도서관 검색시 띄워쓰기 한 단어들은 적당히 검색되니까 이를 고려해서 설정
-    queries: List[Tuple[str, QueryOperator]] = Field(
+    # 일단 상정한 방법은 아래와 같음 
+    queries: List[queryTuple] = Field(
         ...,
         max_items=3, # 최대 3개 쿼리
-        description="Multi-query/Step-back/HyDE로 변환된 쿼리들 (최대 3개)",
+        description="Multi-query/Step-back/HyDE 등으로 변환된 쿼리들 (최대 3개)",
         example=[
-            ("인공지능 윤리 의료 응용 최신 동향", QueryOperator.AND),
-            ("AI ethics healthcare", QueryOperator.OR),
-            ("privacy surveillance", QueryOperator.NOT),
-        ],
+            {
+                "query": "인공지능 윤리",
+                "search_field": "TITLE", 
+                "operator": QueryOperator.AND
+            },
+            {
+                "query": "의료",
+                "search_field": "SUBJECT",
+                "operator": QueryOperator.OR
+            },
+            {
+                "query": "홍길동",
+                "search_field": "AUTHOR",
+                "operator": QueryOperator.NOT
+            }
+        ]
     )
     routes: List[RetrievalRoute] = Field(
         ...,
@@ -86,6 +104,7 @@ class SearchRequest(BaseModel):
         default=None,
         description=" (e.g. {'from': 2020, 'to': 2023, 'author': '홍길동'})"
     )
+    # NOTE: 이 top-k가 각 어댑터 각각의 top-k가 되도록 설정되어있는데, 별도로 설정하기는 애매해서 일단 이렇게 둠
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
     user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
 
