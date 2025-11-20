@@ -12,10 +12,9 @@ import sys
 import os
 
 # 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
-# 현재위치(search) -> 상위(retrieval-service) -> 상위(backend) -> 상위(루트)
-# TODO: 나중에 지우기
+# 현재위치(search) -> 상위(retrieval-service) -> 상위(backend)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 3단계 상위로 이동
+service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 2단계 상위로 이동
 sys.path.append(service_root)
 
 from shared.models import LibraryHoldingInfo
@@ -223,8 +222,30 @@ class LibraryHoldingsSearchParams(BaseModel):
 class LibraryHoldingsScraper(BaseLibraryScraper):
     """연세대학교 도서관 소장자료(단행본 등) 스크래핑"""
     
-    def __init__(self):
+    def __init__(self, user_id: str = None, user_pw: str = None):
         super().__init__()
+        self.user_id = user_id
+        self.user_pw = user_pw
+        self.is_logged_in = False
+    
+    async def __aenter__(self):
+        """
+        async with 구문에 진입할 때 호출됨.
+        여기서 세션을 열고 + 로그인을 수행함.
+        """
+        # 1. 부모의 __aenter__ 호출 (세션 생성)
+        await super().__aenter__()
+        
+        # 2. 아이디/비번이 있으면 로그인 시도
+        if self.user_id and self.user_pw:
+            success = await self.perform_login(self.user_id, self.user_pw)
+            if not success:
+                logger.error("Auto-login failed during initialization.")
+                raise Exception("Login Failed") # 로그인이 필수라면 여기서 에러를 발생시켜서 진행을 막을 수 있음
+            else:
+                self.is_logged_in = True
+        
+        return self
     
     async def execute_holdings_search(
         self, 

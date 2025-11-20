@@ -17,6 +17,7 @@ sys.path.append(service_root)
 
 from shared.models import ElectronicResourceInfo
 from base_scraper import BaseLibraryScraper
+from urllib.parse import urljoin, urlparse, parse_qs, unquote
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +215,7 @@ class ElectronicResourceScraper(BaseLibraryScraper):
         self.user_id = user_id
         self.user_pw = user_pw
         self.is_logged_in = False
-
+        
     async def __aenter__(self):
         """
         async with 구문에 진입할 때 호출됨.
@@ -470,46 +471,130 @@ class ElectronicResourceScraper(BaseLibraryScraper):
         
         return results
     
-    async def _get_electronic_detailed_info(self, url: str) -> ElectronicResourceInfo:
+    async def _get_electronic_detailed_info(self, access_id: str) -> ElectronicResourceInfo:
         """전자자료 상세 정보 페이지에서 추가 정보 추출 (초록, 키워드 등)"""
+
+        # 기본값으로 초기화
+        access_id = access_id
+        title = ""
+        author = []
+        source = ""
+        publication_year = 0
+        doi = ""
+        link_url = ""
+        abstract = ""
+        keywords = []
+        detail_url = f"{self.base_url}/eds/detail/{access_id}"
+
         try:
-            html_content = await self._fetch(url)
-            await asyncio.sleep(self.request_delay)
+            session = await self._get_session()
+            async with session.get(detail_url, timeout=15) as response:
+                response.raise_for_status()
+                html_content = await response.text()
             
             soup = BeautifulSoup(html_content, 'html.parser')
             
-            # 초록 추출
-            abstract = ""
-            abstract_elem = soup.select_one('.abstractSection .sectionContent')
-            if abstract_elem:
-                abstract = abstract_elem.text.strip()
+            # 제목 추출 (profileHeader > h3)
+            title_elem = soup.select_one('.profileHeader h3')
+            if title_elem:
+                title = title_elem.get_text(strip=True)
             
-            # 키워드 추출
-            keywords = []
-            keyword_elems = soup.select('.keywordsSection .sectionContent .keyword')
-            for kw_elem in keyword_elems:
-                kw_text = kw_elem.text.strip()
-                if kw_text:
-                    keywords.append(kw_text)
+            # 출처 추출 (profileHeader > p)
+            source_elem = soup.select_one('.profileHeader p')
+            if source_elem:
+                source = source_elem.get_text(strip=True)
+                # 발행년도 추출 및 추가
+                try:
+                    year = self._extract_year(source)
+                    if year and year > 0:
+                        publication_year = year
+                        logger.debug(f"Found publication year for {access_id}: {year}")
+                except Exception as e:
+                    logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
             
-            return ElectronicResourceInfo(
-                abstract=abstract,
-                keywords=keywords
-            )
-        except Exception as e:
-            logger.error(f"Failed to fetch electronic detailed info from {url}: {e}")
-            return ElectronicResourceInfo()
+            # 상세 정보 테이블에서 추출
+            detail_table = soup.select_one('table#moreInfo')
+            if detail_table:
+                rows = detail_table.select('tr')
+                for row in rows:
+                    th = row.select_one('th')
+                    td = row.select_one('td')
+                    
+                    if not th or not td:
+                        continue
+                    
+                    field_name = th.get_text(strip=True)
+                    field_value = td.get_text(strip=True)
+                    
+                    if field_name == "저자":
+                        # td 내부의 모든 <a> 태그 텍스트를 저자로 취급
+                        a_tags = td.select('a')
+                        if a_tags:
+                            extracted_authors = []
+                            for a in a_tags:
+                                name = a.get_text(strip=True)
+                                if name and name not in extracted_authors:
+                                    extracted_authors.append(name)
+                            author = extracted_authors
+                        else:
+                            author = [field_value]
+                    
+                    # 키워드 추출
+                    if field_name == "키워드" or field_name == "주제어" or field_name == "MeSH Terms":
+                        if field_name == "키워드" or field_name == "주제어":
+                            # td 내부의 모든 <a> 태그 텍스트를 키워드로 취급
+                            a_tags = td.select('a')
+                            for a in a_tags:
+                                kw = a.get_text(strip=True)
+                                if kw and kw not in keywords:
+                                    keywords.append(kw)
+                        elif field_name == "MeSH Terms":
+                            search_tags = td.select('searchlink')
+                            for tag in search_tags:
+                                kw = tag.get_text(strip=True)
+                                if kw and kw not in keywords:
+                                    keywords.append(kw)
+                    
+                    # 초록 추출
+                    if field_name == "초록" or field_name == "Abstract":
+                        abstract = field_value
 
-    def _extract_year(self, text: str) -> int:
-        """텍스트에서 연도 추출"""
-        
-        # 4자리 연도 패턴 찾기 (숫자가 아닌 문자로 둘러싸인 19xx 또는 20xx)
-        # 예: "2023", "c2023", "(2023)", "2023." 등
-        year_pattern = r'(?<!\d)(?:19|20)\d{2}(?!\d)'
-        matches = re.findall(year_pattern, text)
-        
-        if matches:
-            # 가장 최근 연도 반환
-            return max(map(int, matches))
-        
-        return 0    
+                    # DOI 추출
+                    if field_name == "DOI":
+                        doi = field_value
+            
+            # Full Text 링크 추출
+            try:
+                online_ul = soup.select_one('ul.onlineAccess')
+                if online_ul:
+                    a_tag = online_ul.select_one('a') # 첫 번째 <a> 태그 선택
+                    link_url = a_tag.get('href', '')
+                else:
+                    logger.debug("No onlineAccess section found for %s", access_id)
+            except Exception as e:
+                logger.debug("Failed to extract link_url for %s: %s", access_id, e)
+
+            logger.info(f"Extracted info for {access_id}: {title}")
+            
+            # Pydantic 모델로 반환
+            return ElectronicResourceInfo(
+                access_id=access_id,
+                title=title,
+                author=author,
+                source=source,
+                publication_year=publication_year,
+                doi=doi,
+                link_url=link_url,
+                abstract=abstract,
+                keywords=keywords,
+                detail_url=detail_url
+            )
+            
+        except Exception as e:
+            logger.warning(f"Failed to get detailed info for {access_id}: {e}")
+            # 에러 발생 시 기본값으로 모델 반환
+            return ElectronicResourceInfo(
+                access_id=access_id,
+                detail_url=detail_url
+            )
+   

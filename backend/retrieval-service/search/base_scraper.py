@@ -1,6 +1,7 @@
 import aiohttp
 from typing import Optional
 import logging
+import re
 from playwright.async_api import async_playwright
 
 logger = logging.getLogger(__name__)
@@ -10,9 +11,15 @@ class BaseLibraryScraper:
     """모든 도서관 스크래퍼의 상위 클래스"""
     
     def __init__(self):
+        self.is_logged_in = False
+
         self.base_url = "https://library.yonsei.ac.kr"
         self.login_url = f"{self.base_url}/login"
+        self.logout_url = f"{self.base_url}/SSOLegacy.do?pname=spLogout"
+
+        # TODO: 적절한 값으로 설정 필요. 일단은 안전하게 1초로 설정함.
         self.request_delay = 1.0
+        
         self.session: Optional[aiohttp.ClientSession] = None
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -40,7 +47,6 @@ class BaseLibraryScraper:
         logger.info(f"Starting login process for user: {user_id}")
         
         async with async_playwright() as p:
-            # headless=False로 설정하면 브라우저가 뜨는 것을 눈으로 볼 수 있습니다 (디버깅용)
             browser = await p.chromium.launch(headless=True) 
             context = await browser.new_context()
             page = await context.new_page()
@@ -49,15 +55,14 @@ class BaseLibraryScraper:
                 # 1. 로그인 페이지 이동
                 await page.goto(self.login_url)
                 
-                # 페이지 로딩 대기 (아이디 입력창이 나올 때까지)
+                # 페이지 로딩 대기
                 await page.wait_for_selector("#id", state="visible")
 
-                # 2. 아이디/비번 입력 (제공해주신 HTML 기반)
+                # 2. 아이디/비번 입력
                 await page.fill("#id", user_id)
                 await page.fill("#password", user_pw)
 
-                # (선택사항) '로그인 유지' 체크박스 클릭
-                # 체크하면 세션 유지 시간이 길어질 수 있어 추천합니다.
+                # '로그인 유지' 체크박스 클릭
                 if await page.is_visible("#keepLogin"):
                      await page.check("#keepLogin")
 
@@ -70,9 +75,6 @@ class BaseLibraryScraper:
                     await page.click(".loginBtn input[type='submit']")
 
                 # 4. 로그인 성공 확인
-                # 보통 로그인 후에는 URL이 바뀌거나, 로그인 폼이 사라집니다.
-                # 여기서는 간단히 쿠키가 생성되었는지로 1차 판단하거나, 
-                # 페이지 내에 'Logout' 버튼이나 사용자 이름이 있는지 체크하는 것이 확실합니다.
                 
                 # 예시: 로그인 후 메인 페이지로 갔다면 URL 체크
                 # if "login" not in page.url: ...
@@ -89,20 +91,62 @@ class BaseLibraryScraper:
                     # aiohttp 쿠키 저장소에 업데이트
                     session.cookie_jar.update_cookies({cookie['name']: cookie['value']})
                 
+                self.is_logged_in = True  # 로그인 상태 설정
                 logger.info(f"Login successful. Transferred {len(cookies)} cookies to session.")
                 return True
 
             except Exception as e:
                 logger.error(f"Login failed due to error: {e}")
+                self.is_logged_in = False
                 return False
             finally:
                 await browser.close()
+
+    async def perform_logout(self) -> bool:
+        """
+        로그아웃 수행: 연세대 도서관 로그아웃 URL에 요청을 보내 서버 측 세션 종료
+        """
+        if not self.is_logged_in:
+            logger.info("Not logged in, skipping logout.")
+            return True
+            
+        try:
+            logger.info("Performing logout...")
+            session = await self._get_session()
+            
+            # 로그아웃 URL로 GET 요청
+            async with session.get(self.logout_url, timeout=10) as response:
+                if response.status in [200, 302, 303]:  # 성공 또는 리다이렉트
+                    logger.info(f"Logout successful (status: {response.status}).")
+                    self.is_logged_in = False
+                    
+                    # 쿠키 클리어
+                    session.cookie_jar.clear()
+                    return True
+                else:
+                    logger.warning(f"Logout returned unexpected status: {response.status}")
+                    self.is_logged_in = False  # 상태는 초기화
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Logout failed: {e}")
+            self.is_logged_in = False  # 에러 발생 시에도 상태 초기화
+            return False
 
     async def __aenter__(self):
         await self._get_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        async with 블록이 끝날 때 호출됨.
+        로그인 상태라면 로그아웃 수행 후 세션 정리.
+        """
+        # 로그인 상태라면 로그아웃 수행
+        if self.is_logged_in:
+            await self.perform_logout()
+        
+        # 세션 종료
         await self.close()
         
     async def _fetch(self, url: str) -> str:
@@ -111,3 +155,17 @@ class BaseLibraryScraper:
         async with session.get(url, timeout=30) as response:
             response.raise_for_status()
             return await response.text()
+    
+    def _extract_year(self, text: str) -> int:
+        """텍스트에서 연도 추출"""
+        
+        # 4자리 연도 패턴 찾기 (숫자가 아닌 문자로 둘러싸인 19xx 또는 20xx)
+        # 예: "2023", "c2023", "(2023)", "2023." 등
+        year_pattern = r'(?<!\d)(?:19|20)\d{2}(?!\d)'
+        matches = re.findall(year_pattern, text)
+        
+        if matches:
+            # 가장 최근 연도 반환
+            return max(map(int, matches))
+        
+        return 0 

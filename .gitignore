@@ -231,3 +231,4 @@ monitoring/
 ssl/
 
 playground.py
+.VSCodeCounter/
