@@ -1,6 +1,7 @@
 # Library Scraper Pydantic 모델
 
 연세대학교 도서관 스크래퍼는 두 가지 타입을 제공합니다:
+
 - **LibraryHoldingsScraper**: 소장자료 검색 (단행본, 학위논문 등)
 - **ElectronicResourceScraper**: 전자자료 검색 (학술논문, E-Journal 등)
 

@@ -59,14 +59,6 @@
 - Routing : 질문을 분석하여 retrieval-service에게 "어떤 경로로 검색할지" 지시 (e.g., "도서" -> Vector DB, "연구 논문" -> 연세대학교 학술정보원)
 - Query Construction : Text-to-SQL, Self-query 로직을 생성하여 retrieval-service에 전달
 
-### 4. Retrieval Service (Port: 8003)
-
-- Retrieval 단계 담당
-- strategy-service의 요청에 따라 모든 데이터 소스에서 문서를 검색
-- Retriever : VectorDB, SQL DB, 웹 등의 소스에서 데이터를 수집
-- Ranking & Fusion : Rerank 로직을 사용해 여러 소스에서 가져온 결과를 조합하고 순위 설정
-- Refinement : CRAG 로직을 이용해 검색 결과의 품질 평가
-
 ### 5. Generation Service (Port: 8004)
 
 - Generation 단계 담당
