@@ -3,16 +3,6 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 # ===== 기본 모델들 =====
-# ( ... 생략 ... )
-# (GitHub에 있던 다른 모델들은 그대로 둡니다)
-
-class DialogueRequest(BaseModel):
-    """소크라테스식 대화 요청"""
-    session_id: str
-    message: str
-    conversation_history: Optional[List[str]] = []
-
-# ( ... 수많은 다른 모델들 ... )
 
 class ServiceStatus(BaseModel):
     """서비스 상태"""
@@ -26,13 +16,23 @@ class SystemStatus(BaseModel):
     services: List[ServiceStatus]
     active_sessions: int
 
-
 # ===== 대화 기록 =====
-# 1. Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
+# Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
+# TODO: 프론트앤드가 없는 상황에서 이 모델이 실제로 사용되는지 논의 필요
 class Conversation(BaseModel):
     id: str  # 각 대화의 고유 ID (라우팅에 사용)
     title: str
     last_updated: str
+
+# ================== dialogue-service 부분 ==================
+
+class DialogueRequest(BaseModel):
+    """소크라테스식 대화 요청"""
+    session_id: str
+    message: str
+    conversation_history: Optional[List[str]] = []
+
+# ================== strategy-service 부분 ==================
 
 # ===== 라우팅 =====
 # [!] 충돌 해결:
@@ -45,8 +45,38 @@ class RoutingDecision(BaseModel):
     route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
     reason: str = Field(..., description="라우팅 결정 이유")
 
-# (기존 RouteResponse 모델은 여기서 삭제됨)
 
+# ===== Strategy → Retrieval 요청 =====
+class SearchRequest(BaseModel):
+    """Strategy Service가 Retrieval Service에 보내는 검색 요청"""
+    
+    queries: List[str] = Field(
+        description="Multi-query/Step-back/HyDE로 변환된 쿼리들"
+    )
+    routes: List[str] = Field(
+        description="검색할 데이터 소스 ['vector_db', 'yonsei_library']"
+    )
+    filters: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Self-query 결과 (예: {'year': {'$gte': 2020}})"
+    )
+    top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
+    user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
+
+# ================== retrieval-service 부분 ==================
+
+# ===== 검색된 문서 공통 모델 =====
+# TODO: 수정 필요!
+class Document(BaseModel):
+    """검색된 문서"""
+    
+    content: str = Field(description="문서 본문 텍스트")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="출처, 제목, 저자, URL 등"
+    )
+    score: float = Field(default=0.0, description="검색 유사도 점수")
+    doc_id: Optional[str] = Field(default=None, description="문서 고유 ID")
 
 # ===== 도서관 소장 정보 =====
 class LibraryHoldingInfo(BaseModel):
@@ -79,7 +109,7 @@ class LibraryHoldingInfo(BaseModel):
         }
     }
 
-
+# ===== 도서관 전자자료 정보 =====
 class ElectronicResourceInfo(BaseModel):
     """전자자료(학술논문, E-Book, 저널 등) 상세 정보"""
     access_id: str = Field(default="", description="자료 접근 ID (있는 경우)")
@@ -111,3 +141,50 @@ class ElectronicResourceInfo(BaseModel):
             ]
         }
     }
+
+# ===== Reranking 결과 =====
+class RankedDocument(BaseModel):
+    """Rerank 후 최종 문서"""
+    
+    content: str
+    metadata: Dict[str, Any]
+    rerank_score: float = Field(description="Cross-encoder 재점수")
+    original_score: float = Field(description="초기 검색 점수")
+    source: str = Field(description="데이터 소스 (vector_db/yonsei_library)")
+    rank: int = Field(description="최종 순위 (1부터 시작)")
+
+# ===== CRAG 평가 결과 =====
+class RelevanceLevel(str, Enum):
+    """CRAG 관련성 등급"""
+    CORRECT = "correct"      # 바로 사용 가능
+    AMBIGUOUS = "ambiguous"  # 보강 필요
+    INCORRECT = "incorrect"  # 폐기
+
+class CRAGResult(BaseModel):
+    """CRAG 품질 평가 결과"""
+    
+    document: RankedDocument
+    relevance: RelevanceLevel
+    confidence: float = Field(ge=0.0, le=1.0, description="판단 신뢰도")
+    reason: Optional[str] = Field(default=None, description="판단 근거")
+
+# ===== Retrieval → Generation 응답 =====
+class RetrievalResult(BaseModel):
+    """Retrieval Service의 최종 응답"""
+    
+    documents: List[RankedDocument] = Field(
+        description="CRAG 필터링 + Rerank 완료 문서"
+    )
+    crag_analysis: List[CRAGResult] = Field(
+        description="전체 문서에 대한 CRAG 평가"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="검색 통계 (처리 시간, 소스별 문서 수 등)"
+    )
+    needs_web_search: bool = Field(
+        default=False,
+        description="CRAG에서 incorrect 비율이 높아 웹 검색 필요 여부"
+    )
+
+# ================== generation-service 부분 ==================
