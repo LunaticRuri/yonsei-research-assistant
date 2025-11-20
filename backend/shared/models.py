@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from enum import Enum
+from typing import List, Optional, Dict, Tuple, Any
 from datetime import datetime
 
 # ===== 기본 모델들 =====
@@ -18,7 +19,7 @@ class SystemStatus(BaseModel):
 
 # ===== 대화 기록 =====
 # Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
-# TODO: 프론트앤드가 없는 상황에서 이 모델이 실제로 사용되는지 논의 필요
+# FIXME: 프론트앤드가 없는 상황에서 이 모델이 실제로 사용되는지 논의 필요
 class Conversation(BaseModel):
     id: str  # 각 대화의 고유 ID (라우팅에 사용)
     title: str
@@ -47,29 +48,53 @@ class RoutingDecision(BaseModel):
 
 
 # ===== Strategy → Retrieval 요청 =====
+class QueryOperator(str, Enum):
+    """검색 연산자"""
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+
+class RetrievalRoute(str, Enum):
+    """검색 소스"""
+    VECTOR_DB = "vector_book_db" # 국립중앙도서관 도서 벡터 DB
+    YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
+    YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
+
 class SearchRequest(BaseModel):
     """Strategy Service가 Retrieval Service에 보내는 검색 요청"""
     
-    queries: List[str] = Field(
-        description="Multi-query/Step-back/HyDE로 변환된 쿼리들"
+    # TODO: 서비스 사이 전달 부분이니 논의 필요
+    # 일단 상정한 방법은 아래와 같음
+    # 도서관 검색시 띄워쓰기 한 단어들은 적당히 검색되니까 이를 고려해서 설정
+    queries: List[Tuple[str, QueryOperator]] = Field(
+        ...,
+        max_items=3, # 최대 3개 쿼리
+        description="Multi-query/Step-back/HyDE로 변환된 쿼리들 (최대 3개)",
+        example=[
+            ("인공지능 윤리 의료 응용 최신 동향", QueryOperator.AND),
+            ("AI ethics healthcare", QueryOperator.OR),
+            ("privacy surveillance", QueryOperator.NOT),
+        ],
     )
-    routes: List[str] = Field(
-        description="검색할 데이터 소스 ['vector_db', 'yonsei_library']"
+    routes: List[RetrievalRoute] = Field(
+        ...,
+        description="검색할 소스들 (도서관 소장, 전자자료, 벡터 DB 등)",
+        example=[RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS],
     )
+    # 필터 부분은 전달 받아서 LLM에게 줘서 처리하는 방법 생각 중 - 어차피 메타데이터도 같이 넘길 것이니까?
     filters: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Self-query 결과 (예: {'year': {'$gte': 2020}})"
+        description=" (e.g. {'from': 2020, 'to': 2023, 'author': '홍길동'})"
     )
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
     user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
 
 # ================== retrieval-service 부분 ==================
+# TODO: 전반적 수정 필요!
 
 # ===== 검색된 문서 공통 모델 =====
-# TODO: 수정 필요!
 class Document(BaseModel):
     """검색된 문서"""
-    
     content: str = Field(description="문서 본문 텍스트")
     metadata: Dict[str, Any] = Field(
         default_factory=dict,

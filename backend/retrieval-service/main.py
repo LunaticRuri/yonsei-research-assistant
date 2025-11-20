@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Retrieval Service",
-    description="Multi-source document retrieval with CRAG quality assessment",
+    description="Multi-source document retrieval for Yonsei Research Assistant",
     version="1.0.0"
 )
 
