@@ -2,9 +2,10 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 from functools import lru_cache
 
+
 class Settings(BaseSettings):
     """애플리케이션 설정"""
-    
+
     # OpenAI 설정
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"

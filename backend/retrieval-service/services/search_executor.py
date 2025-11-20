@@ -27,6 +27,7 @@ class SearchExecutor:
         
         # Step 1: 검색
         self.logger.info(f"Starting retrieval for {len(request.queries)} queries")
+        # [ ] 여기까지 리딩 완료, 나중에 다시 돌아와야 함.
         raw_documents = await self.retriever.retrieve_all(request)
         
         if not raw_documents:

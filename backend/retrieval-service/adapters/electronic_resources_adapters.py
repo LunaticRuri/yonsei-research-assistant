@@ -1,14 +1,18 @@
 from typing import List, Dict, Any
-from .base_adapter import BaseRetriever
-from scrapers.library_scraper import LibraryScraper
+from base_adapters import BaseRetriever
+from config import settings
+from scrapers.electronic_resources_scraper import ElectronicResourcesScraper
 from shared.models import Document
 import logging
 
-class LibraryAdapter(BaseRetriever):
-    """연세대학교 학술정보원 어댑터"""
+class ElectronicResourcesAdapter(BaseRetriever):
+    """연세대학교 학술정보원 전자자료 어댑터"""
     
     def __init__(self):
-        self.scraper = LibraryScraper()
+        self.scraper = ElectronicResourcesScraper(
+            user_id=settings.YONSEI_ID,
+            user_pw=settings.YONSEI_PW
+            )
         self.logger = logging.getLogger(__name__)
     
     async def search(

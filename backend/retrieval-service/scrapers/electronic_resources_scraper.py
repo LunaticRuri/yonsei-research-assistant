@@ -207,7 +207,7 @@ class ElectronicSearchParams(BaseModel):
     }
 
 
-class ElectronicResourceScraper(BaseLibraryScraper):
+class ElectronicResourcesScraper(BaseLibraryScraper):
     """전자자료(학술논문, E-Journal 등) 전용 스크래퍼"""
 
     def __init__(self, user_id: str = None, user_pw: str = None):

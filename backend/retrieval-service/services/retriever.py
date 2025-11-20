@@ -4,7 +4,6 @@ from shared.models import Document, SearchRequest
 from config import settings
 import asyncio
 import logging
-from collections import defaultdict
 
 class RetrieverService:
     """Strategy Service의 라우팅 결정을 실행"""
