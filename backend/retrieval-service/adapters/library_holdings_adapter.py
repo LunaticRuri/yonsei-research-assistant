@@ -5,7 +5,7 @@ from scrapers.library_holdings_scraper import (
     LibraryHoldingsScraper,
     LibraryHoldingsSearchParams,
     LibrarySearchField,
-    MaterialType,
+    HoldingsMaterialType,
     YearRange
 )
 from shared.models import Document, SearchRequest
@@ -55,7 +55,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
                     types = []
                     for t in request.filters["material_types"]:
                         try:
-                            types.append(MaterialType(t))
+                            types.append(HoldingsMaterialType(t))
                         except ValueError:
                             pass
                     if types:

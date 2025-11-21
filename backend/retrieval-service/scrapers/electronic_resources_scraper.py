@@ -15,26 +15,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 service_root = os.path.abspath(os.path.join(current_dir, "../../"))
 sys.path.append(service_root)
 
-from shared.models import ElectronicResourceInfo
+from shared.models import ElectronicResourceInfo, ElectronicSearchField
 from base_scraper import BaseLibraryScraper
 from urllib.parse import urljoin, urlparse, parse_qs, unquote
-from search_params import BaseSearchParams, QueryOperator, YearRange, AdditionalQuery
+from search_params import BaseSearchParams, YearRange, AdditionalQuery
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# Pydantic Models for Electronic Resource Search Parameters
+# Pydantic Model for Electronic Resource Search Parameters
 # ============================================================================
-
-class ElectronicSearchField(str, Enum):
-    """검색 필드 타입 (전자자료 전용)"""
-    KEYWORD = "TX"  # 키워드
-    TOTAL = ""      # 전체
-    TITLE = "TI"     # 제목
-    AUTHOR = "AU"    # 저자
-    SUBJECT = "SU"  # 주제어
-
 
 class ElectronicSearchParams(BaseSearchParams):
     """전자자료 검색 파라미터
@@ -78,6 +69,12 @@ class ElectronicSearchParams(BaseSearchParams):
         description="추가 검색 조건 (최대 10개)"
     )
     
+    # 연도 범위 필터
+    year_range: Optional[YearRange] = Field(
+        default=None,
+        description="발행 연도 범위"
+    )
+
     # 페이징 옵션
     results_per_page: Literal[10, 20, 30, 50, 100] = Field(
         default=20,
@@ -90,6 +87,7 @@ class ElectronicSearchParams(BaseSearchParams):
         description="학술저널만 검색할지 여부"
     )
 
+    # 외국어 자료 포함 여부 (기본값: True)
     foreign_language: bool = Field(
         default=True,
         description="영어 등 외국어 자료도 검색할지 여부"

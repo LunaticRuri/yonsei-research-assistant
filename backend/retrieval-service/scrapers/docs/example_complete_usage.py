@@ -30,7 +30,7 @@ from library_holdings_scraper import (
     LibraryHoldingsScraper,
     LibraryHoldingsSearchParams,
     SearchField,
-    MaterialType,
+    HoldingsMaterialType,
     QueryOperator,
     AdditionalQuery,
     YearRange
@@ -176,7 +176,7 @@ async def example_holdings_4_material_filter():
         
         params = LibraryHoldingsSearchParams(
             query="블록체인",
-            material_types=[MaterialType.BOOK],  # 단행본만
+            material_types=[HoldingsMaterialType.BOOK],  # 단행본만
             year_range=YearRange(from_year=2019, to_year=2025),
             results_per_page=20
         )

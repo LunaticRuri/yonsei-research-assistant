@@ -17,36 +17,16 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 2단계 상위로 이동
 sys.path.append(service_root)
 
-from shared.models import LibraryHoldingInfo
+from shared.models import LibraryHoldingInfo, LibrarySearchField, HoldingsMaterialType
 from base_scraper import BaseLibraryScraper
-from search_params import BaseSearchParams, QueryOperator, YearRange, AdditionalQuery
+from search_params import BaseSearchParams, AdditionalQuery, YearRange
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# Pydantic Models for Library Search Parameters
+# Pydantic Model for Library Search Parameters
 # ============================================================================
-
-class LibrarySearchField(str, Enum):
-    """검색 필드 타입 (도서관 소장자료 전용)"""
-    TOTAL = "TOTAL"  # 전체
-    TITLE = "1"  # 서명(책제목)
-    AUTHOR = "2"  # 저자
-    PUBLISHER = "3"  # 출판사
-    SUBJECT = "4"  # 주제어
-
-
-class MaterialType(str, Enum):
-    """자료 유형 (도서관 소장자료만)"""
-    TOTAL = "TOTAL"  # 전체
-    BOOK = "m"  # 단행본
-    SERIAL = "s"  # 연속간행물
-    MULTIMEDIA = "b;p;v;x;u;c"  # 멀티미디어/비도서
-    THESIS = "t"  # 학위논문
-    OLD_BOOK = "o"  # 고서
-    ARTICLE = "zart"  # 기사
-
 
 class LibraryHoldingsSearchParams(BaseSearchParams):
     """도서관 검색 파라미터
@@ -96,9 +76,15 @@ class LibraryHoldingsSearchParams(BaseSearchParams):
         description="추가 검색 조건 (최대 10개)"
     )
     
+    # 연도 범위 필터
+    year_range: Optional[YearRange] = Field(
+        default=None,
+        description="발행 연도 범위"
+    )
+
     # 필터링 옵션 (도서관 소장자료만)
-    material_types: List[MaterialType] = Field(
-        default=[MaterialType.TOTAL],
+    material_types: List[HoldingsMaterialType] = Field(
+        default=[HoldingsMaterialType.TOTAL],
         min_length=1,
         description="검색할 자료 유형 (여러 개 선택 가능)"
     )

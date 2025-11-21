@@ -76,7 +76,7 @@ class RetrieverService:
     ) -> List[Document]:
         """단일 검색 + 메타데이터 보강"""
         try:
-            search_params = await adapter.request_to_search_params_by_llm(request)
+            search_params = await adapter.request_to_search_params(request)
             docs = await adapter.search(search_params)
             
             # 소스 정보 추가 (나중에 Fusion에서 사용)

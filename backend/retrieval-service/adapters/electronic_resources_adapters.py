@@ -8,6 +8,7 @@ from scrapers.electronic_resources_scraper import (
     YearRange
 )
 from shared.models import Document, SearchRequest
+from scrapers.search_params import AdditionalQuery
 import logging
 
 class ElectronicResourcesAdapter(BaseRetriever):
@@ -20,7 +21,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
         )
         self.logger = logging.getLogger(__name__)
     
-    async def request_to_search_params_by_llm(self, request: SearchRequest) -> ElectronicSearchParams:
+    async def request_to_search_params(self, request: SearchRequest) -> ElectronicSearchParams:
         """
         LLM 기반으로 SearchRequest를 ElectronicSearchParams 객체로 변환
         
@@ -33,18 +34,48 @@ class ElectronicResourcesAdapter(BaseRetriever):
         filters = request.filters
         
         # 기본 쿼리 설정
-        query = queries[0][0]
+        query = queries.query_1
+        search_field = queries.search_field_1 if isinstance(queries.search_field_1, ElectronicSearchField) else ElectronicSearchField.TOTAL
 
-        search_field = ElectronicSearchField.GENERAL
-
-        if queries and len(queries) > 1:
-            # 추가 쿼리 병합
-            additional_queries = []
-            for q in queries[1:]:
-                additional_queries.append(
-                    ElectronicSearchField.GENERAL, q[0]
+        additional_query = []
+        if queries.query_2:
+            if isinstance(queries.search_field_2, ElectronicSearchField):
+                search_field_2 = queries.search_field_2
+            else:
+                search_field_2 = ElectronicSearchField.TOTAL
+            
+            additional_query.append(
+                AdditionalQuery(
+                    search_field= search_field_2,
+                    query= queries.query_2,
+                    operator= queries.operator_1
                 )
+            )
 
+        if queries.query_3:
+            if isinstance(queries.search_field_3, ElectronicSearchField):
+                search_field_3 = queries.search_field_3
+            else:
+                search_field_3 = ElectronicSearchField.TOTAL
+            
+            additional_query.append(
+                AdditionalQuery(
+                    search_field= search_field_3,
+                    query= queries.query_3,
+                    operator= queries.operator_2
+                )
+            )
+        
+        # 필터 처리
+        if filters.get("year_range"):
+            from_year, to_year = filters["year_range"]
+            year_range = YearRange(from_year=from_year, to_year=to_year)
+        if filters.get("accademic_journals_only"):
+            academic_journals_only = filters["academic_journals_only"]
+        if filters.get("foreign_language"):
+            foreign_language = filters["foreign_language"]
+        
+        
 
 
         

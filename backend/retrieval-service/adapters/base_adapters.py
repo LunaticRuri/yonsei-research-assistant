@@ -6,7 +6,7 @@ class BaseRetriever(ABC):
     """모든 검색 어댑터가 구현해야 하는 인터페이스"""
     
     @abstractmethod
-    async def request_to_search_params_by_llm(self, request: SearchRequest) -> Any:
+    async def request_to_search_params(self, request: SearchRequest) -> Any:
         """
         LLM 기반으로 SearchRequest를 어댑터별 검색 파라미터 객체로 변환
         

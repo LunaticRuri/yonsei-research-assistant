@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
-from typing import List, Optional, Dict, Tuple, Any
+from typing import List, Optional, Dict, Tuple, Union, Any
 from datetime import datetime
 
 # ===== 기본 모델들 =====
@@ -46,6 +46,7 @@ class RoutingDecision(BaseModel):
     route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
     reason: str = Field(..., description="라우팅 결정 이유")
 
+# ================== retrieval-service 부분 ==================
 
 # ===== Strategy → Retrieval 요청 =====
 class QueryOperator(str, Enum):
@@ -60,10 +61,62 @@ class RetrievalRoute(str, Enum):
     YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
     YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
 
-class queryTuple(BaseModel):
-    query: str
-    search_field: str # e.g., "TITLE", "AUTHOR", "SUBJECT" 아무거나 됨. 어차피 LLM이 처리할 것.
-    operator: QueryOperator
+
+class LibrarySearchField(str, Enum):
+    """검색 필드 타입 (도서관 소장자료 전용)"""
+    TOTAL = "TOTAL"  # 전체
+    TITLE = "1"  # 서명(책제목)
+    AUTHOR = "2"  # 저자
+    PUBLISHER = "3"  # 출판사
+    SUBJECT = "4"  # 주제어
+
+class ElectronicSearchField(str, Enum):
+    """검색 필드 타입 (전자자료 전용)"""
+    TOTAL = ""      # 전체
+    KEYWORD = "TX"  # 키워드
+    TITLE = "TI"     # 제목
+    AUTHOR = "AU"    # 저자
+    SUBJECT = "SU"  # 주제어
+
+class SearchQueries(BaseModel):
+    query_1: str
+    search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
+    operator_1: QueryOperator
+    query_2: Optional[str] = None
+    search_field_2: Optional[Union[str, LibrarySearchField, ElectronicSearchField]] = None
+    operator_2: Optional[QueryOperator] = None
+    query_3: Optional[str] = None
+    search_field_3: Optional[Union[str, LibrarySearchField, ElectronicSearchField]] = None
+    
+    @model_validator(mode='after')
+    def validate_query_sequence(self):
+        """쿼리는 순차적으로만 입력 가능: (query_1), (query_1, query_2), (query_1, query_2, query_3)"""
+        has_query_2 = bool(self.query_2)
+        has_query_3 = bool(self.query_3)
+        
+        # query_1은 필수이므로 이미 검증됨 (str 타입)
+        
+        # query_2가 없는데 query_3이 있는 경우 에러
+        if not has_query_2 and has_query_3:
+            raise ValueError(
+                "Invalid query sequence: query_3 cannot exist without query_2. "
+                "Valid combinations: (query_1), (query_1, query_2), (query_1, query_2, query_3)"
+            )
+        
+        # query_2가 있으면 search_field_2와 operator_2도 필수
+        if has_query_2:
+            if self.search_field_2 is None:
+                raise ValueError("search_field_2 is required when query_2 is provided")
+            if self.operator_2 is None:
+                raise ValueError("operator_2 is required when query_2 is provided")
+        
+        # query_3이 있으면 search_field_3도 필수
+        if has_query_3:
+            if self.search_field_3 is None:
+                raise ValueError("search_field_3 is required when query_3 is provided")
+        
+        return self
+
 
 class SearchRequest(BaseModel):
     """
@@ -72,34 +125,13 @@ class SearchRequest(BaseModel):
     
     # TODO: 서비스 사이 전달 부분이니 논의 필요
     # 일단 상정한 방법은 아래와 같음 
-    queries: List[queryTuple] = Field(
-        ...,
-        max_items=3, # 최대 3개 쿼리
-        description="Multi-query/Step-back/HyDE 등으로 변환된 쿼리들 (최대 3개)",
-        example=[
-            {
-                "query": "인공지능 윤리",
-                "search_field": "TITLE", 
-                "operator": QueryOperator.AND
-            },
-            {
-                "query": "의료",
-                "search_field": "SUBJECT",
-                "operator": QueryOperator.OR
-            },
-            {
-                "query": "홍길동",
-                "search_field": "AUTHOR",
-                "operator": QueryOperator.NOT
-            }
-        ]
-    )
+    queries: SearchQueries = Field(..., description="Multi-query/Step-back/HyDE 등으로 변환된 쿼리들 (최대 3개)")
     routes: List[RetrievalRoute] = Field(
         ...,
         description="검색할 소스들 (도서관 소장, 전자자료, 벡터 DB 등)",
         example=[RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS],
     )
-    # 필터 부분은 전달 받아서 LLM에게 줘서 처리하는 방법 생각 중 - 어차피 메타데이터도 같이 넘길 것이니까?
+    # 검색 필터
     filters: Optional[Dict[str, Any]] = Field(
         default=None,
         description=" (e.g. {'from': 2020, 'to': 2023, 'author': '홍길동'})"
@@ -108,7 +140,7 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
     user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
 
-# ================== retrieval-service 부분 ==================
+
 # TODO: 전반적 수정 필요!
 
 # ===== 검색된 문서 공통 모델 =====
@@ -123,6 +155,17 @@ class Document(BaseModel):
     doc_id: Optional[str] = Field(default=None, description="문서 고유 ID")
 
 # ===== 도서관 소장 정보 =====
+
+class HoldingsMaterialType(str, Enum):
+    """자료 유형 (도서관 소장자료만)"""
+    TOTAL = "TOTAL"  # 전체
+    BOOK = "m"  # 단행본
+    SERIAL = "s"  # 연속간행물
+    MULTIMEDIA = "b;p;v;x;u;c"  # 멀티미디어/비도서
+    THESIS = "t"  # 학위논문
+    OLD_BOOK = "o"  # 고서
+    ARTICLE = "zart"  # 기사
+
 class LibraryHoldingInfo(BaseModel):
     """도서관 소장 자료 상세 정보"""
     access_id: str = Field(..., description="자료 접근 ID (CATTOT...)")  

@@ -4,8 +4,8 @@
 
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
-from typing import List, Optional, TypeVar, Generic
-
+from typing import Optional, Union, TypeVar, Generic
+from shared.models import LibrarySearchField, ElectronicSearchField
 
 class QueryOperator(str, Enum):
     """검색 연산자 (모든 스크래퍼 공통)"""
@@ -50,12 +50,14 @@ class YearRange(BaseModel):
 # Generic 타입을 위한 타입 변수
 SearchFieldType = TypeVar('SearchFieldType', bound=Enum)
 
-
-class AdditionalQuery(BaseModel, Generic[SearchFieldType]):
+class AdditionalQuery(BaseModel):
     """
-    추가 검색 조건 (generic)
+    추가 검색 조건
     """
-    search_field: SearchFieldType
+    search_field: Union[str, LibrarySearchField, ElectronicSearchField] = Field(
+        ...,
+        description="검색 필드"
+    )
     query: str = Field(
         ...,
         min_length=1,
@@ -84,7 +86,10 @@ class AdditionalQuery(BaseModel, Generic[SearchFieldType]):
 # 기본 검색 파라미터 (추상 클래스)
 # ============================================================================
 
-class BaseSearchParams(BaseModel):
+# Generic 타입을 위한 타입 변수
+SearchFieldType = TypeVar('SearchFieldType', bound=Enum)
+
+class BaseSearchParams(BaseModel, Generic[SearchFieldType]):
     """
     모든 검색 파라미터의 기본 클래스
     
@@ -98,12 +103,11 @@ class BaseSearchParams(BaseModel):
         description="주 검색어"
     )
     
-    # 공통 필터링 옵션
-    year_range: Optional[YearRange] = Field(
+    search_field: SearchFieldType = Field(
         default=None,
-        description="발행 연도 범위"
+        description="검색 필드"
     )
-    
+
     model_config = {
         "arbitrary_types_allowed": True
     }
