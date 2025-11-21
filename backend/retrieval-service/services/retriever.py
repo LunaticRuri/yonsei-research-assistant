@@ -18,10 +18,11 @@ class RetrieverService:
         self.adapters: Dict[RetrievalRoute, BaseRetriever] = {
             RetrievalRoute.YONSEI_HOLDINGS: LibraryHoldingsAdapter(),
             RetrievalRoute.YONSEI_ELECTRONICS: ElectronicResourcesAdapter(),
-            RetrievalRoute.VECTOR_DB: VectorDBAdapter(
-                index_path=settings.FAISS_INDEX_PATH,
-                embedding_model=settings.VECTOR_EMBEDDING_MODEL
-            )
+            # FIXME: 구현되면 주석 해제
+            #RetrievalRoute.VECTOR_DB: VectorDBAdapter(
+            #    index_path=settings.FAISS_INDEX_PATH,
+            #    embedding_model=settings.VECTOR_EMBEDDING_MODEL
+            #)
         }
         self.logger = logging.getLogger(__name__)
     

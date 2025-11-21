@@ -50,7 +50,7 @@ class YearRange(BaseModel):
 # Generic 타입을 위한 타입 변수
 SearchFieldType = TypeVar('SearchFieldType', bound=Enum)
 
-class AdditionalQuery(BaseModel):
+class AdditionalQuery(BaseModel, Generic[SearchFieldType]):
     """
     추가 검색 조건
     """
@@ -86,10 +86,7 @@ class AdditionalQuery(BaseModel):
 # 기본 검색 파라미터 (추상 클래스)
 # ============================================================================
 
-# Generic 타입을 위한 타입 변수
-SearchFieldType = TypeVar('SearchFieldType', bound=Enum)
-
-class BaseSearchParams(BaseModel, Generic[SearchFieldType]):
+class BaseSearchParams(BaseModel):
     """
     모든 검색 파라미터의 기본 클래스
     
@@ -102,7 +99,7 @@ class BaseSearchParams(BaseModel, Generic[SearchFieldType]):
         min_length=1,
         description="주 검색어"
     )
-    
+
     search_field: SearchFieldType = Field(
         default=None,
         description="검색 필드"

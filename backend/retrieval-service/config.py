@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from dotenv import load_dotenv
 import os
@@ -41,8 +41,10 @@ class Settings(BaseSettings):
     # 로깅
     LOG_LEVEL: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"  # 👈 추가 필드 무시 (PYTHONPATH 같은 시스템 변수)
+    )
 
 settings = Settings()

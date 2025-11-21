@@ -70,7 +70,7 @@ class LibraryHoldingsSearchParams(BaseSearchParams):
     )
     
     # 추가 검색 조건 (도서관 소장자료 전용 필드 사용)
-    additional_queries: List[AdditionalQuery[LibrarySearchField]] = Field(
+    additional_queries: Optional[List[AdditionalQuery[LibrarySearchField]]] = Field(
         default_factory=list,
         max_length=10,
         description="추가 검색 조건 (최대 10개)"

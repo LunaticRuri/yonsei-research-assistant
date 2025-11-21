@@ -12,13 +12,12 @@ service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 2단계 �
 sys.path.append(service_root)
 
 
-from scrapers.search_params import AdditionalQuery
+from scrapers.search_params import AdditionalQuery, YearRange
 from shared.models import (
     Document,
     SearchRequest,
     LibrarySearchField,
     HoldingsMaterialType,
-    YearRange,
     LibraryHoldingInfo
 )
 import logging
@@ -58,11 +57,11 @@ class LibraryHoldingsAdapter(BaseRetriever):
                 search_field_2 = LibrarySearchField.TOTAL
             
             additional_queries.append(
-                AdditionalQuery(
-                    search_field= search_field_2,
-                    query= queries.query_2,
-                    operator= queries.operator_1
-                )
+                {
+                    "search_field": search_field_2,
+                    "query": queries.query_2,
+                    "operator": queries.operator_1
+                }
             )
 
         if queries.query_3:
@@ -72,17 +71,17 @@ class LibraryHoldingsAdapter(BaseRetriever):
                 search_field_3 = LibrarySearchField.TOTAL
             
             additional_queries.append(
-                AdditionalQuery(
-                    search_field= search_field_3,
-                    query= queries.query_3,
-                    operator= queries.operator_2
-                )
+                {
+                    "search_field": search_field_3,
+                    "query": queries.query_3,
+                    "operator": queries.operator_2
+                }
             )
         
         # 필터 처리
         if filters.get("year_range"):
             from_year, to_year = filters["year_range"]
-            year_range = YearRange(from_year=from_year, to_year=to_year)
+            year_range = {"from_year": from_year, "to_year": to_year}
         if filters.get("maraterial_types"):
             for t in filters["material_types"]:
                 if isinstance(t, HoldingsMaterialType):
@@ -92,6 +91,9 @@ class LibraryHoldingsAdapter(BaseRetriever):
                         material_types.append(HoldingsMaterialType(t))
                     except ValueError:
                         pass
+        
+        if not material_types:
+            material_types = [HoldingsMaterialType.TOTAL]
         
         return LibraryHoldingsSearchParams(
             query=query,

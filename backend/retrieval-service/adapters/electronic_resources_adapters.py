@@ -2,12 +2,11 @@ from typing import List
 from .base_adapters import BaseRetriever
 from config import settings
 from scrapers.electronic_resources_scraper import ElectronicResourcesScraper, ElectronicSearchParams
-from scrapers.search_params import AdditionalQuery
+from scrapers.search_params import AdditionalQuery, YearRange
 from shared.models import (
     Document,
     SearchRequest,
     ElectronicSearchField,
-    YearRange,
     ElectronicResourceInfo
 )
 import logging
@@ -38,6 +37,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
         search_field = queries.search_field_1 if isinstance(queries.search_field_1, ElectronicSearchField) else ElectronicSearchField.TOTAL
         year_range = None
         academic_journals_only = True
+        foreign_language = True
 
         # 기본 쿼리 설정
         
@@ -49,11 +49,11 @@ class ElectronicResourcesAdapter(BaseRetriever):
                 search_field_2 = ElectronicSearchField.TOTAL
             
             additional_queries.append(
-                AdditionalQuery(
-                    search_field= search_field_2,
-                    query= queries.query_2,
-                    operator= queries.operator_1
-                )
+                {
+                    "search_field": search_field_2,
+                    "query": queries.query_2,
+                    "operator": queries.operator_1
+                }
             )
 
         if queries.query_3:
@@ -63,17 +63,17 @@ class ElectronicResourcesAdapter(BaseRetriever):
                 search_field_3 = ElectronicSearchField.TOTAL
             
             additional_queries.append(
-                AdditionalQuery(
-                    search_field= search_field_3,
-                    query= queries.query_3,
-                    operator= queries.operator_2
-                )
+                {
+                    "search_field": search_field_3,
+                    "query": queries.query_3,
+                    "operator": queries.operator_2
+                }
             )
         
         # 필터 처리
         if filters.get("year_range"):
             from_year, to_year = filters["year_range"]
-            year_range = YearRange(from_year=from_year, to_year=to_year)
+            year_range = {"from_year": from_year, "to_year": to_year}
         if filters.get("accademic_journals_only"):
             academic_journals_only = filters["academic_journals_only"]
         if filters.get("foreign_language"):

@@ -1,23 +1,21 @@
 import asyncio
 from bs4 import BeautifulSoup
-from enum import Enum
 import logging
-import os
-from pydantic import BaseModel, Field, field_validator
-import re
-import sys
+from pydantic import Field
 from typing import List, Optional, Literal
 from urllib.parse import quote
 
 # 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
 # 현재위치(search) -> 상위(retrieval-service) -> 상위(backend)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-service_root = os.path.abspath(os.path.join(current_dir, "../../"))
-sys.path.append(service_root)
+from pathlib import Path
+import sys
+project_root = Path(__file__).parent.parent
+service_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(service_root))
 
 from shared.models import ElectronicResourceInfo, ElectronicSearchField
 from base_scraper import BaseLibraryScraper
-from urllib.parse import urljoin, urlparse, parse_qs, unquote
 from search_params import BaseSearchParams, YearRange, AdditionalQuery
 
 logger = logging.getLogger(__name__)
@@ -63,7 +61,7 @@ class ElectronicSearchParams(BaseSearchParams):
     )
     
     # 추가 검색 조건 (전자자료 전용 필드 사용)
-    additional_queries: List[AdditionalQuery[ElectronicSearchField]] = Field(
+    additional_queries: Optional[List[AdditionalQuery[ElectronicSearchField]]] = Field(
         default_factory=list,
         max_length=10,
         description="추가 검색 조건 (최대 10개)"

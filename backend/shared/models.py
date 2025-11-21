@@ -113,15 +113,15 @@ class SearchQueries(BaseModel):
                 "Valid combinations: (query_1), (query_1, query_2), (query_1, query_2, query_3)"
             )
         
-        # query_2가 있으면 search_field_2와 operator_2도 필수
+        # query_2가 있으면 search_field_2가 필수
         if has_query_2:
             if self.search_field_2 is None:
                 raise ValueError("search_field_2 is required when query_2 is provided")
-            if self.operator_2 is None:
-                raise ValueError("operator_2 is required when query_2 is provided")
-        
-        # query_3이 있으면 search_field_3도 필수
+            
+        # query_3이 있으면 operator_2와 search_field_3도 필수
         if has_query_3:
+            if self.operator_2 is None:
+                raise ValueError("operator_2 is required when query_3 is provided")
             if self.search_field_3 is None:
                 raise ValueError("search_field_3 is required when query_3 is provided")
         
