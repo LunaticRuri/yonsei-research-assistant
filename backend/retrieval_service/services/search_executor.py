@@ -26,7 +26,7 @@ class SearchExecutor:
         start_time = time.time()
         
         # Step 1: 검색
-        # [ ] 검색 부분 잘 작동하는지 테스트 해보아야 함.
+        # [x] 검색 부분 잘 작동하는지 테스트 해보아야 함.
         self.logger.info(f"Starting retrieval for {len(request.queries)} queries")
         raw_documents = await self.retriever.retrieve_all(request)
         

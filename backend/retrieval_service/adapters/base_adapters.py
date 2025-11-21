@@ -8,7 +8,7 @@ class BaseRetriever(ABC):
     @abstractmethod
     async def request_to_search_params(self, request: SearchRequest) -> Any:
         """
-        LLM 기반으로 SearchRequest를 어댑터별 검색 파라미터 객체로 변환
+        SearchRequest를 어댑터별 검색 파라미터 객체로 변환
         
         Args:
             request (SearchRequest): 통합 검색 요청 객체

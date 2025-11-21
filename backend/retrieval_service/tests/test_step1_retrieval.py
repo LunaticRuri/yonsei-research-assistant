@@ -9,10 +9,11 @@ SearchExecutor의 Step 1 (검색) 부분만 테스트합니다.
 
 import asyncio
 import logging
+
+# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
+# 현재위치 -> 상위(tests) -> 상위(retrieval-service) -> 상위(backend)
 from pathlib import Path
 import sys
-
-# 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent.parent
 service_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -139,10 +140,56 @@ async def test_library_holdings_search():
         return False
 
 
-async def test_multi_source_search():
-    """멀티 소스 검색 테스트 (전자자료 + 소장자료)"""
+async def test_vectordb_search():
+    """Vector DB 검색 테스트"""
     logger.info("\n" + "=" * 80)
-    logger.info("TEST 3: Multi-Source Search")
+    logger.info("TEST 3: Vector DB Search")
+    logger.info("=" * 80)
+    
+    # 검색 요청 생성
+    search_request = SearchRequest(
+        queries=SearchQueries(
+            query_1="artificial intelligence",
+            operator_1=QueryOperator.AND
+        ),
+        routes=[RetrievalRoute.VECTOR_DB],
+        filters={
+            "year_range": (2020, 2024)
+        },
+        top_k=5,
+        user_query="AI 관련 도서"
+    )
+    
+    logger.info(f"Search Query: {search_request.queries.query_1}")
+    
+    # Retriever 실행
+    retriever = RetrieverService()
+    
+    try:
+        documents = await retriever.retrieve_all(search_request)
+        
+        logger.info(f"\n✅ Retrieved {len(documents)} documents")
+        
+        # 결과 출력
+        for i, doc in enumerate(documents[:3], 1):
+            logger.info(f"\n--- Document {i} ---")
+            logger.info(f"Title: {doc.metadata.get('title', 'N/A')}")
+            logger.info(f"Year: {doc.metadata.get('publication_year', 'N/A')}")
+            logger.info(f"Subjects: {doc.metadata.get('nlk_subjects', 'N/A')}")
+            logger.info(f"Content Preview: {doc.content[:200]}...")
+            logger.info(f"Score: {doc.score}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Test failed: {e}", exc_info=True)
+        return False
+
+
+async def test_multi_source_search():
+    """멀티 소스 검색 테스트 (전자자료 + 소장자료 + VectorDB)"""
+    logger.info("\n" + "=" * 80)
+    logger.info("TEST 4: Multi-Source Search")
     logger.info("=" * 80)
     
     # 검색 요청 생성
@@ -154,7 +201,8 @@ async def test_multi_source_search():
         ),
         routes=[
             RetrievalRoute.YONSEI_ELECTRONICS,
-            RetrievalRoute.YONSEI_HOLDINGS
+            RetrievalRoute.YONSEI_HOLDINGS,
+            RetrievalRoute.VECTOR_DB
         ],
         filters={
             "year_range": (2020, 2024)
@@ -206,6 +254,7 @@ async def main():
     results = {
         "Electronic Resources": False,
         "Library Holdings": False,
+        "Vector DB": False,
         "Multi-Source": False
     }
     
@@ -217,7 +266,11 @@ async def main():
     results["Library Holdings"] = await test_library_holdings_search()
     await asyncio.sleep(2)
     
-    # Test 3: 멀티 소스 검색
+    # Test 3: 벡터 DB 검색
+    results["Vector DB"] = await test_vectordb_search()
+    await asyncio.sleep(2)
+    
+    # Test 4: 멀티 소스 검색
     results["Multi-Source"] = await test_multi_source_search()
     
     # 결과 요약

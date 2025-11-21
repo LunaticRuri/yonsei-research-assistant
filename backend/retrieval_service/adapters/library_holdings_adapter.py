@@ -14,6 +14,7 @@ sys.path.append(service_root)
 
 from scrapers.search_params import AdditionalQuery, YearRange
 from shared.models import (
+    RetrievalRoute,
     Document,
     SearchRequest,
     LibrarySearchField,
@@ -34,7 +35,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
     
     async def request_to_search_params(self, request: SearchRequest) -> LibraryHoldingsSearchParams:
         """
-        LLM 기반으로 SearchRequest를 LibraryHoldingsSearchParams 객체로 변환
+        SearchRequest를 LibraryHoldingsSearchParams 객체로 변환
         
         Args:
             request (SearchRequest): 통합 검색 요청 객체
@@ -123,7 +124,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
                 doc = Document(
                     content=self._extract_text(item),
                     metadata={
-                        'source': 'yonsei_holdings',
+                        'source': RetrievalRoute.LIBRARY_HOLDINGS.value,
                         'title': item.title,
                         'author': item.author,
                         'publication_info': item.publication_info,

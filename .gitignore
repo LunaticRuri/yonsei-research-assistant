@@ -133,14 +133,9 @@ tmp/
 temp/
 
 # Database files
-*.db
+*.db*
 *.sqlite
 *.sqlite3
-
-# ChromaDB data
-backend/rag-service/data/
-data/
-*.chroma
 
 # API Keys and secrets
 .env.production
@@ -207,6 +202,7 @@ raw_data/
 # Vector embeddings
 embeddings/
 vectors/
+*.index
 
 # Sample documents for testing
 sample_docs/

@@ -133,7 +133,6 @@ class SearchRequest(BaseModel):
     Strategy Service가 Retrieval Service에 전달하는 구조화된 검색 명세
     """
     
-    # TODO: 서비스 사이 전달 부분이니 논의 필요
     # 일단 상정한 방법은 아래와 같음 
     queries: SearchQueries = Field(..., description="Multi-query/Step-back/HyDE 등으로 변환된 쿼리들 (최대 3개)")
     routes: List[RetrievalRoute] = Field(

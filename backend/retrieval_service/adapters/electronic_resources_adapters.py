@@ -4,6 +4,7 @@ from config import settings
 from scrapers.electronic_resources_scraper import ElectronicResourcesScraper, ElectronicSearchParams
 from scrapers.search_params import AdditionalQuery, YearRange
 from shared.models import (
+    RetrievalRoute,
     Document,
     SearchRequest,
     ElectronicSearchField,
@@ -23,7 +24,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
     
     async def request_to_search_params(self, request: SearchRequest) -> ElectronicSearchParams:
         """
-        LLM 기반으로 SearchRequest를 ElectronicSearchParams 객체로 변환
+        SearchRequest를 ElectronicSearchParams 객체로 변환
         
         Args:
             request (SearchRequest): 통합 검색 요청 객체
@@ -108,7 +109,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
                 doc = Document(
                     content=self._extract_text(item),
                     metadata={
-                        'source': 'yonsei_electronics',
+                        'source': RetrievalRoute.ELECTRONIC_RESOURCES.value,
                         'title': item.title,
                         'author': "; ".join(item.author) if item.author else "",
                         'publication_year': item.publication_year,

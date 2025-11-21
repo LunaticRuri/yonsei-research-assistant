@@ -10,22 +10,22 @@
 │   └── ...
 │
 └── backend/                  # 마이크로서비스 및 인프라
-    ├── api-gateway/          # 1. API 게이트웨이 (Port: 8000)
-    ├── dialogue-service/     # 2. 소크라테스식 대화 (Port: 8001)
+    ├── api_gateway/          # 1. API 게이트웨이 (Port: 8000)
+    ├── dialogue_service/     # 2. 소크라테스식 대화 (Port: 8001)
     │
-    ├── strategy-service/     # 3. RAG 쿼리 처리 (Port: 8002)
+    ├── strategy_service/     # 3. RAG 쿼리 처리 (Port: 8002)
     │   │                     # (RAG 다이어그램의 'Query Translation', 'Query Construciton', 'Routing' 담당)
     │   └── ...
     │
-    ├── retrieval-service/    # 4. 데이터 검색/융합 (Port: 8003)
+    ├── retrieval_service/    # 4. 데이터 검색/융합 (Port: 8003)
     │   │                     # (RAG 다이어그램의 'Retrieval' 담당)
     │   └── ...
     │
-    ├── generation-service/   # 5. RAG 답변 생성 (Port: 8004)
+    ├── generation_service/   # 5. RAG 답변 생성 (Port: 8004)
     │   │                     # (RAG 다이어그램의 'Generation' 담당)
     │   └── ...
     │
-    ├── indexing-worker/      # 6. 데이터 색인 워커 (API 아님)
+    ├── indexing_worker/      # 6. 데이터 색인 워커 (API 아님)
     │   │                     # (RAG 다이어그램의 'Indexing' 담당)
     │   └── ...
     │

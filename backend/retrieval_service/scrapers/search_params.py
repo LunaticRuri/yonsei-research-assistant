@@ -4,7 +4,8 @@
 
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
-from typing import Optional, Union, TypeVar, Generic
+from typing import Dict, Any, Optional, Union, TypeVar, Generic
+import numpy as np
 from shared.models import LibrarySearchField, ElectronicSearchField
 
 class QueryOperator(str, Enum):
@@ -88,7 +89,7 @@ class AdditionalQuery(BaseModel, Generic[SearchFieldType]):
 
 class BaseSearchParams(BaseModel):
     """
-    모든 검색 파라미터의 기본 클래스
+    도서관 검색 파라미터의 기본 클래스
     
     공통 필드들을 정의하며, 각 스크래퍼는 이를 상속하여
     특화된 검색 파라미터를 구현합니다.
@@ -103,6 +104,30 @@ class BaseSearchParams(BaseModel):
     search_field: SearchFieldType = Field(
         default=None,
         description="검색 필드"
+    )
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+# ============================================================================
+# Vector DB 검색 파라미터
+# ============================================================================
+
+class VectorSearchParams(BaseModel):
+    """
+    Vector DB 검색을 위한 파라미터
+    NOTE: BaseSearchParams와 별도임!
+    """
+    query_1: str
+    vector_1: np.ndarray
+    query_2: Optional[str] = None
+    vector_2: Optional[np.ndarray] = None
+    query_3: Optional[str] = None
+    vector_3: Optional[np.ndarray] = None
+    year_range: Optional[YearRange] = Field(
+        default=None,
+        description="발행 연도 범위"
     )
 
     model_config = {
