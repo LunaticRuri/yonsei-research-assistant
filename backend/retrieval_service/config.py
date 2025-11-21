@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     
     # CRAG 설정
     # TODO: 구현되면 나중에 수정해야 함.
-    CRAG_LLM_MODEL: str = "gpt-4o-mini"
+    CRAG_LLM_MODEL: str = "gemini-1.5-flash"
     CRAG_RELEVANCE_THRESHOLD: float = 0.6
     CRAG_INCORRECT_RATIO_THRESHOLD: float = 0.7  # 이 비율 넘으면 웹 검색 필요
     

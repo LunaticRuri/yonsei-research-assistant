@@ -115,7 +115,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
                 doc = Document(
                     content=self._extract_text(item),
                     metadata={
-                        'source': RetrievalRoute.LIBRARY_HOLDINGS.value,
+                        'source': RetrievalRoute.YONSEI_HOLDINGS.value,
                         'title': item.title,
                         'author': item.author,
                         'publication_info': item.publication_info,

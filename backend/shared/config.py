@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     # OpenAI 설정
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
+
+    # Gemini 설정
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     
     # 데이터베이스 설정
     CHROMA_DB_PATH: str = "./data/chroma_db"

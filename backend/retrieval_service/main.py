@@ -27,12 +27,12 @@ async def search(request: SearchRequest):
     메인 검색 엔드포인트
     
     Strategy Service로부터 받은 요청 처리:
-    - Multi-query 검색
+    - 연세대학교 학술정보원 소장자료, 전자자료, 국립중앙도서관 도서 Vector DB 검색
     - Rerank + Fusion
     - CRAG 품질 평가
     """
     try:
-        logger.info(f"Received search request: {request.queries[:2]}...")
+        logger.info(f"Received search request: {request.queries.query_1}...")
         result = await executor.execute(request)
         return result
         

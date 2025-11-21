@@ -35,6 +35,9 @@ class RetrieverService:
         # 각 소스별 검색 태스크 생성
         tasks = []
         for route in request.routes:
+            if route is RetrievalRoute.VECTOR_DB:
+                # Vector DB는 별도 처리
+                continue
             adapter = self.adapters.get(route)
             if not adapter:
                 self.logger.warning(f"Unknown route: {route}")
@@ -52,6 +55,17 @@ class RetrieverService:
         # NOTE: 혹시 연세대학교 로그인-로그아웃 겹침 문제로 작동 안되면 직렬로 바꾸기
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
+        # deadlock 방지를 위해 Vector DB 검색은 별도 처리
+        if RetrievalRoute.VECTOR_DB in request.routes:
+            vector_adapter = self.adapters.get(RetrievalRoute.VECTOR_DB)
+            if vector_adapter:
+                try:
+                    vector_search_params = await vector_adapter.request_to_search_params(request)
+                    vector_docs = await vector_adapter.search(vector_search_params, request.top_k)
+                    results.append(vector_docs)
+                except Exception as e:
+                    self.logger.error(f"Vector DB search failed: {e}")
+
         # 결과 수집
         for result in results:
             if isinstance(result, Exception):

@@ -1,4 +1,5 @@
 from typing import List, Dict
+import random
 from sentence_transformers import CrossEncoder
 import logging
 from collections import defaultdict
@@ -11,9 +12,43 @@ class RankerService:
     
     def __init__(self):
         # Cross-encoder 모델 로드 (semantic reranking용)
-        self.reranker = CrossEncoder(settings.RERANK_MODEL)
+        # TODO: 주석 해제!
+        # self.reranker = CrossEncoder(settings.RERANK_MODEL)
         self.logger = logging.getLogger(__name__)
     
+    def tmp_rerank_and_fuse(
+        self,
+        documents: List[Document],
+        user_query: str,
+        method: str = None
+    ) -> List[RankedDocument]:
+        """
+        임시 Rerank + Fusion 파이프라인
+        단순 무작위 정렬
+        
+        Args:
+            documents: 여러 소스에서 검색된 원본 문서
+            user_query: 사용자 원본 질문 (Cross-encoder 입력)
+            method: 'rrf' | 'weighted' | 'cross_encoder'
+        
+        Returns:
+            최종 순위가 매겨진 문서 (top_k개)
+        """
+        # 1. 중복 제거 (동일 content 기준)
+        unique_docs = self._deduplicate(documents)
+        self.logger.info(f"Deduplicated: {len(documents)} -> {len(unique_docs)}")
+        
+        # 2. 무작위 정렬
+        random.shuffle(unique_docs)
+        
+        # 3. Top-K 필터링 및 순위 부여
+        final_docs = unique_docs[:settings.RERANK_TOP_K]
+        for rank, doc in enumerate(final_docs, start=1):
+            doc.rank = rank
+        
+        self.logger.info(f"Final ranked documents: {len(final_docs)}")
+        return final_docs
+
     def rerank_and_fuse(
         self,
         documents: List[Document],

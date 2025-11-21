@@ -1,5 +1,5 @@
 from typing import List
-from openai import AsyncOpenAI
+from google import genai
 from config import settings
 import logging
 import json
@@ -10,7 +10,11 @@ class RefinerService:
     """CRAG (Corrective RAG) - 검색 결과 품질 평가"""
     
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        self.model = genai.GenerativeModel(
+            model_name=settings.CRAG_LLM_MODEL,
+            generation_config={"response_mime_type": "application/json"}
+        )
         self.logger = logging.getLogger(__name__)
     
     async def evaluate_relevance(
@@ -53,7 +57,8 @@ class RefinerService:
     ) -> CRAGResult:
         """단일 문서 평가 (LLM 호출)"""
         
-        prompt = f"""다음 문서가 사용자 질문에 대한 답변을 제공하는지 평가하세요.
+        prompt = f"""You are a document relevance evaluator.
+다음 문서가 사용자 질문에 대한 답변을 제공하는지 평가하세요.
 
 질문: {query}
 
@@ -72,18 +77,10 @@ JSON 형식으로 응답:
     "reason": "판단 근거 (한 문장)"
 }}"""
         
-        response = await self.client.chat.completions.create(
-            model=settings.CRAG_LLM_MODEL,
-            messages=[
-                {"role": "system", "content": "You are a document relevance evaluator."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.0,
-            response_format={"type": "json_object"}
-        )
+        response = await self.model.generate_content_async(prompt)
         
         # JSON 파싱
-        result_text = response.choices[0].message.content
+        result_text = response.text
         result_dict = json.loads(result_text)
         
         return CRAGResult(

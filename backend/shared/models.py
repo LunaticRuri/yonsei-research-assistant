@@ -7,12 +7,14 @@ from datetime import datetime
 
 class ServiceStatus(BaseModel):
     """서비스 상태"""
+
     name: str
     status: str
     last_check: Optional[datetime] = None
 
 class SystemStatus(BaseModel):
     """전체 시스템 상태"""
+    
     overall_status: str
     services: List[ServiceStatus]
     active_sessions: int
@@ -29,6 +31,7 @@ class Conversation(BaseModel):
 
 class DialogueRequest(BaseModel):
     """소크라테스식 대화 요청"""
+
     session_id: str
     message: str
     conversation_history: Optional[List[str]] = []
@@ -43,6 +46,7 @@ class DialogueRequest(BaseModel):
 
 class RoutingDecision(BaseModel):
     """라우팅 결정 결과를 담는 모델"""
+
     route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
     reason: str = Field(..., description="라우팅 결정 이유")
 
@@ -51,12 +55,14 @@ class RoutingDecision(BaseModel):
 # ===== Strategy → Retrieval 요청 =====
 class QueryOperator(str, Enum):
     """검색 연산자"""
+
     AND = "and" # 필수
     OR = "or"  # 선택
     NOT = "not" # 제외
 
 class RetrievalRoute(str, Enum):
     """검색 소스"""
+
     VECTOR_DB = "vector_book_db" # 국립중앙도서관 도서 벡터 DB
     YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
     YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
@@ -64,6 +70,7 @@ class RetrievalRoute(str, Enum):
 
 class LibrarySearchField(str, Enum):
     """검색 필드 타입 (도서관 소장자료 전용)"""
+
     TOTAL = "TOTAL"  # 전체
     TITLE = "1"  # 서명(책제목)
     AUTHOR = "2"  # 저자
@@ -72,6 +79,7 @@ class LibrarySearchField(str, Enum):
 
 class HoldingsMaterialType(str, Enum):
     """자료 유형 (도서관 소장자료만)"""
+
     TOTAL = "TOTAL"  # 전체
     BOOK = "m"  # 단행본
     SERIAL = "s"  # 연속간행물
@@ -82,6 +90,7 @@ class HoldingsMaterialType(str, Enum):
 
 class ElectronicSearchField(str, Enum):
     """검색 필드 타입 (전자자료 전용)"""
+
     TOTAL = ""      # 전체
     KEYWORD = "TX"  # 키워드
     TITLE = "TI"     # 제목
@@ -89,6 +98,8 @@ class ElectronicSearchField(str, Enum):
     SUBJECT = "SU"  # 주제어
 
 class SearchQueries(BaseModel):
+    """멀티 쿼리 모델 (최대 3개 쿼리 지원)"""
+
     query_1: str
     search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
     operator_1: Optional[QueryOperator] = None
@@ -101,6 +112,7 @@ class SearchQueries(BaseModel):
     @model_validator(mode='after')
     def validate_query_sequence(self):
         """쿼리는 순차적으로만 입력 가능: (query_1), (query_1, query_2), (query_1, query_2, query_3)"""
+
         has_query_2 = bool(self.query_2)
         has_query_3 = bool(self.query_3)
         
@@ -157,9 +169,6 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
     user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
 
-
-# TODO: 전반적 수정 필요!
-
 # ===== 검색된 문서 공통 모델 =====
 class Document(BaseModel):
     """검색된 문서"""
@@ -175,6 +184,7 @@ class Document(BaseModel):
 
 class LibraryHoldingInfo(BaseModel):
     """도서관 소장 자료 상세 정보"""
+
     access_id: str = Field(..., description="자료 접근 ID (CATTOT...)")  
     title: str = Field(default="", description="자료 제목")
     author: str = Field(default="", description="저자(여러명도 한 문자열로 포함 가능)")
@@ -206,6 +216,7 @@ class LibraryHoldingInfo(BaseModel):
 # ===== 도서관 전자자료 정보 =====
 class ElectronicResourceInfo(BaseModel):
     """전자자료(학술논문, E-Book, 저널 등) 상세 정보"""
+
     access_id: str = Field(default="", description="자료 접근 ID (있는 경우)")
     title: str = Field(default="", description="자료 제목 (논문명, E-Book 제목 등)")
     author: List[str] = Field(default_factory=list, description="저자 또는 작성자")
@@ -239,7 +250,7 @@ class ElectronicResourceInfo(BaseModel):
 # ===== Reranking 결과 =====
 class RankedDocument(BaseModel):
     """Rerank 후 최종 문서"""
-    
+
     content: str
     metadata: Dict[str, Any]
     rerank_score: float = Field(description="Cross-encoder 재점수")
@@ -250,17 +261,20 @@ class RankedDocument(BaseModel):
 # ===== CRAG 평가 결과 =====
 class RelevanceLevel(str, Enum):
     """CRAG 관련성 등급"""
+
     CORRECT = "correct"      # 바로 사용 가능
     AMBIGUOUS = "ambiguous"  # 보강 필요
     INCORRECT = "incorrect"  # 폐기
 
 class CRAGResult(BaseModel):
     """CRAG 품질 평가 결과"""
-    
+
     document: RankedDocument
     relevance: RelevanceLevel
     confidence: float = Field(ge=0.0, le=1.0, description="판단 신뢰도")
     reason: Optional[str] = Field(default=None, description="판단 근거")
+
+# ================== generation-service 부분 ==================
 
 # ===== Retrieval → Generation 응답 =====
 class RetrievalResult(BaseModel):
@@ -280,5 +294,3 @@ class RetrievalResult(BaseModel):
         default=False,
         description="CRAG에서 incorrect 비율이 높아 웹 검색 필요 여부"
     )
-
-# ================== generation-service 부분 ==================
