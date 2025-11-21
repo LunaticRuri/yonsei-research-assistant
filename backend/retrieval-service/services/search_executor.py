@@ -26,8 +26,8 @@ class SearchExecutor:
         start_time = time.time()
         
         # Step 1: 검색
+        # [ ] 검색 부분 잘 작동하는지 테스트 해보아야 함.
         self.logger.info(f"Starting retrieval for {len(request.queries)} queries")
-        # [ ] 여기까지 리딩 완료, 나중에 다시 돌아와야 함.
         raw_documents = await self.retriever.retrieve_all(request)
         
         if not raw_documents:
@@ -40,6 +40,7 @@ class SearchExecutor:
             )
         
         # Step 2: Rerank + Fusion
+        # [ ] 여기까지 리딩 완료, 나중에 다시 돌아와야 함.
         self.logger.info(f"Reranking {len(raw_documents)} documents")
         ranked_documents = self.ranker.rerank_and_fuse(
             documents=raw_documents,
@@ -79,5 +80,4 @@ class SearchExecutor:
             crag_analysis=crag_results,
             metadata=metadata,
             needs_web_search=needs_web
-
         )

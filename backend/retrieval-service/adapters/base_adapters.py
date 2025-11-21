@@ -18,12 +18,13 @@ class BaseRetriever(ABC):
         pass
 
     @abstractmethod
-    async def search(self, search_params) -> List[Document]:
+    async def search(self, search_params, top_k: int) -> List[Document]:
         """
         통일된 검색 메서드
         
         Args:
             search_params : 각 어댑터별로 변환된 검색 파라미터 객체
+            top_k (int): 반환할 최대 문서 수
         Returns:
             List[Document]: 표준화된 Document 객체 리스트
         """

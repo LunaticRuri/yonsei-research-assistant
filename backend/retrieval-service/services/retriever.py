@@ -74,15 +74,10 @@ class RetrieverService:
         request: SearchRequest,
         route: RetrievalRoute
     ) -> List[Document]:
-        """단일 검색 + 메타데이터 보강"""
+        """단일 소스에서 검색 처리"""
         try:
             search_params = await adapter.request_to_search_params(request)
-            docs = await adapter.search(search_params)
-            
-            # 소스 정보 추가 (나중에 Fusion에서 사용)
-            # FIXME: adapter 내부에서 처리하는 게 맞지 않나?
-            for doc in docs:
-                doc.metadata['retrieval_source'] = route
+            docs = await adapter.search(search_params, request.top_k)
             
             return docs
             

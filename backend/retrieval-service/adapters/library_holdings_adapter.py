@@ -1,72 +1,116 @@
-from typing import List, Dict, Any
+from typing import List
 from .base_adapters import BaseRetriever
 from config import settings
-from scrapers.library_holdings_scraper import (
-    LibraryHoldingsScraper,
-    LibraryHoldingsSearchParams,
+from scrapers.library_holdings_scraper import LibraryHoldingsScraper, LibraryHoldingsSearchParams
+import os
+import sys
+
+# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
+# 현재위치(search) -> 상위(retrieval-service) -> 상위(backend)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 2단계 상위로 이동
+sys.path.append(service_root)
+
+
+from scrapers.search_params import AdditionalQuery
+from shared.models import (
+    Document,
+    SearchRequest,
     LibrarySearchField,
     HoldingsMaterialType,
-    YearRange
+    YearRange,
+    LibraryHoldingInfo
 )
-from shared.models import Document, SearchRequest
 import logging
 
 class LibraryHoldingsAdapter(BaseRetriever):
     """연세대학교 도서관 소장자료(단행본 등) 어댑터"""
     
     def __init__(self):
-        self.scraper = LibraryHoldingsScraper(
-            user_id=settings.YONSEI_ID,
-            user_pw=settings.YONSEI_PW
-        )
+        # NOTE: 아마 소장자료 검색은 로그인 쿠키가 없어도 될 듯
+        # 혹시 요구되면 아래 줄 주석 해제
+        # self.scraper = LibraryHoldingsScraper(user_id=settings.YONSEI_ID, user_pw=settings.YONSEI_PW)
+        self.scraper = LibraryHoldingsScraper()
         self.logger = logging.getLogger(__name__)
     
-    async def search(
-        self, 
-        request: SearchRequest,
-        top_k: int = 10
-    ) -> List[Document]:
+    async def request_to_search_params(self, request: SearchRequest) -> LibraryHoldingsSearchParams:
         """
-        도서관 소장자료 검색 결과를 표준 Document 형식으로 변환
+        LLM 기반으로 SearchRequest를 LibraryHoldingsSearchParams 객체로 변환
+        
+        Args:
+            request (SearchRequest): 통합 검색 요청 객체
+        Returns:
+            LibraryHoldingsSearchParams: 도서관 소장자료 어댑터용 검색 파라미터 객체
         """
-        try:
-            # SearchRequest에서 첫 번째 쿼리 사용 (multi-query는 RetrieverService에서 처리)
-            query_text = request.queries[0][0] if request.queries else request.user_query
+        queries = request.queries
+        filters = request.filters
+        
+        query = queries.query_1
+        search_field = queries.search_field_1 if isinstance(queries.search_field_1, LibrarySearchField) else LibrarySearchField.TOTAL
+        year_range = None
+        material_types = []
+
+        additional_queries = []
+        if queries.query_2:
+            if isinstance(queries.search_field_2, LibrarySearchField):
+                search_field_2 = queries.search_field_2
+            else:
+                search_field_2 = LibrarySearchField.TOTAL
             
-            # 필터 처리
-            search_params_dict = {
-                "query": query_text,
-                "results_per_page": 50 if top_k > 20 else 20 # 적절한 페이지 사이즈 선택
-            }
+            additional_queries.append(
+                AdditionalQuery(
+                    search_field= search_field_2,
+                    query= queries.query_2,
+                    operator= queries.operator_1
+                )
+            )
+
+        if queries.query_3:
+            if isinstance(queries.search_field_3, LibrarySearchField):
+                search_field_3 = queries.search_field_3
+            else:
+                search_field_3 = LibrarySearchField.TOTAL
             
-            if request.filters:
-                if "year_range" in request.filters:
-                    from_year, to_year = request.filters["year_range"]
-                    search_params_dict["year_range"] = YearRange(from_year=from_year, to_year=to_year)
-                
-                if "search_field" in request.filters:
+            additional_queries.append(
+                AdditionalQuery(
+                    search_field= search_field_3,
+                    query= queries.query_3,
+                    operator= queries.operator_2
+                )
+            )
+        
+        # 필터 처리
+        if filters.get("year_range"):
+            from_year, to_year = filters["year_range"]
+            year_range = YearRange(from_year=from_year, to_year=to_year)
+        if filters.get("maraterial_types"):
+            for t in filters["material_types"]:
+                if isinstance(t, HoldingsMaterialType):
+                    material_types.append(t)
+                else:
                     try:
-                        search_params_dict["search_field"] = LibrarySearchField(request.filters["search_field"])
+                        material_types.append(HoldingsMaterialType(t))
                     except ValueError:
                         pass
-                
-                if "material_types" in request.filters:
-                    # 문자열 리스트를 Enum 리스트로 변환
-                    types = []
-                    for t in request.filters["material_types"]:
-                        try:
-                            types.append(HoldingsMaterialType(t))
-                        except ValueError:
-                            pass
-                    if types:
-                        search_params_dict["material_types"] = types
+        
+        return LibraryHoldingsSearchParams(
+            query=query,
+            search_field=search_field,
+            additional_queries=additional_queries,
+            year_range=year_range,
+            material_types=material_types
+        )
 
-            params = LibraryHoldingsSearchParams(**search_params_dict)
 
+    async def search(self, search_params: LibraryHoldingsSearchParams, top_k: int = 10) -> List[Document]:
+        """
+        도서관 소장자료를 검색하고 그 결과를 표준 Document 형식으로 변환
+        """
+        try:
             # 스크래퍼 호출
             async with self.scraper as scraper:
                 raw_results = await scraper.execute_holdings_search(
-                    params=params,
+                    params=search_params,
                     max_results=top_k
                 )
             
@@ -98,9 +142,8 @@ class LibraryHoldingsAdapter(BaseRetriever):
             self.logger.error(f"Library holdings search failed: {e}")
             return []
     
-    def _extract_text(self, item) -> str:
+    def _extract_text(self, item: LibraryHoldingInfo) -> str:
         """스크래핑 결과에서 검색 가능한 텍스트 추출"""
-        # item is LibraryHoldingInfo
         parts = [
             item.title,
             item.author,
@@ -112,7 +155,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
         """도서관 접근 가능 여부 확인"""
         try:
             # 간단한 검색 테스트
-            await self.search("test", top_k=1)
+            await self.search("코끼리", top_k=1)
             return True
         except:
             return False

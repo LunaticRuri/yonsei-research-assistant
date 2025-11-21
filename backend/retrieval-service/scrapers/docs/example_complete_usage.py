@@ -71,7 +71,7 @@ async def example_holdings_1_simple():
         return
     
     # async with를 사용하면 자동으로 로그인/로그아웃 처리됨
-    async with LibraryHoldingsScraper(YONSEI_ID, YONSEI_PW) as scraper:
+    async with LibraryHoldingsScraper() as scraper:
         logger.info("로그인 성공! 검색 시작...")
         
         params = LibraryHoldingsSearchParams(

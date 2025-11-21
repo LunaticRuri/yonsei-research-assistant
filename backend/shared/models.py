@@ -70,6 +70,16 @@ class LibrarySearchField(str, Enum):
     PUBLISHER = "3"  # 출판사
     SUBJECT = "4"  # 주제어
 
+class HoldingsMaterialType(str, Enum):
+    """자료 유형 (도서관 소장자료만)"""
+    TOTAL = "TOTAL"  # 전체
+    BOOK = "m"  # 단행본
+    SERIAL = "s"  # 연속간행물
+    MULTIMEDIA = "b;p;v;x;u;c"  # 멀티미디어/비도서
+    THESIS = "t"  # 학위논문
+    OLD_BOOK = "o"  # 고서
+    ARTICLE = "zart"  # 기사
+
 class ElectronicSearchField(str, Enum):
     """검색 필드 타입 (전자자료 전용)"""
     TOTAL = ""      # 전체
@@ -129,12 +139,20 @@ class SearchRequest(BaseModel):
     routes: List[RetrievalRoute] = Field(
         ...,
         description="검색할 소스들 (도서관 소장, 전자자료, 벡터 DB 등)",
-        example=[RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS],
+        examples=[
+            [RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS],
+            [RetrievalRoute.YONSEI_ELECTRONICS]
+        ],
     )
-    # 검색 필터
+    # 검색 필터 (선택 사항)
     filters: Optional[Dict[str, Any]] = Field(
         default=None,
-        description=" (e.g. {'from': 2020, 'to': 2023, 'author': '홍길동'})"
+        description="각 소스별 필터 조건 (연도 범위, 자료 유형 등)",
+        examples=[
+            # Holdings 용 예시 material_types는 List[HoldingsMaterialType | str]
+            {"year_range": (2020, 2023), "material_types": [HoldingsMaterialType.BOOK, HoldingsMaterialType.THESIS]},
+            {"year_range": (2023, 2025), "academic_journals_only": False, "foreign_language": False} # Electronic 용 예시
+        ]
     )
     # NOTE: 이 top-k가 각 어댑터 각각의 top-k가 되도록 설정되어있는데, 별도로 설정하기는 애매해서 일단 이렇게 둠
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
@@ -155,16 +173,6 @@ class Document(BaseModel):
     doc_id: Optional[str] = Field(default=None, description="문서 고유 ID")
 
 # ===== 도서관 소장 정보 =====
-
-class HoldingsMaterialType(str, Enum):
-    """자료 유형 (도서관 소장자료만)"""
-    TOTAL = "TOTAL"  # 전체
-    BOOK = "m"  # 단행본
-    SERIAL = "s"  # 연속간행물
-    MULTIMEDIA = "b;p;v;x;u;c"  # 멀티미디어/비도서
-    THESIS = "t"  # 학위논문
-    OLD_BOOK = "o"  # 고서
-    ARTICLE = "zart"  # 기사
 
 class LibraryHoldingInfo(BaseModel):
     """도서관 소장 자료 상세 정보"""
