@@ -1,14 +1,15 @@
 from typing import List, Dict
-from adapters import (
-    BaseRetriever, 
-    ElectronicResourcesAdapter, 
-    LibraryHoldingsAdapter, 
-    VectorDBAdapter
-)
-from shared.models import Document, SearchRequest, RetrievalRoute
-from config import settings
 import asyncio
 import logging
+
+from retrieval_service.adapters.base_adapters import BaseRetriever
+from retrieval_service.adapters.library_holdings_adapter import LibraryHoldingsAdapter
+from retrieval_service.adapters.electronic_resources_adapter import ElectronicResourcesAdapter
+from retrieval_service.adapters.vectordb_adapter import VectorDBAdapter
+
+from shared.models import Document, SearchRequest, RetrievalRoute
+
+
 
 class RetrieverService:
     """Strategy Service의 라우팅 결정을 실행"""

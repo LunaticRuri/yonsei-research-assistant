@@ -1,11 +1,11 @@
 """
 공통 검색 파라미터 모델
 """
-
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
-from typing import Dict, Any, Optional, Union, TypeVar, Generic
+from typing import Optional, Union, TypeVar, Generic
 import numpy as np
+
 from shared.models import LibrarySearchField, ElectronicSearchField
 
 class QueryOperator(str, Enum):

@@ -1,28 +1,14 @@
-import aiohttp
 from bs4 import BeautifulSoup
-import time
 import logging
-from typing import List, Dict, Any, Optional, Literal
-from urllib.parse import urljoin, quote
+from typing import List, Optional, Literal
+from urllib.parse import quote
 import asyncio
 import re
-from pydantic import BaseModel, Field, field_validator
-from enum import Enum
-import sys
-import os
-
-# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
-# 현재위치 -> 상위(scrapers) -> 상위(retrieval-service) -> 상위(backend)
-from pathlib import Path
-import sys
-project_root = Path(__file__).parent.parent.parent
-service_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(service_root))
+from pydantic import Field
 
 from shared.models import LibraryHoldingInfo, LibrarySearchField, HoldingsMaterialType
-from base_scraper import BaseLibraryScraper
-from search_params import BaseSearchParams, AdditionalQuery, YearRange
+from retrieval_service.scrapers.base_scraper import BaseLibraryScraper
+from retrieval_service.scrapers.search_params import BaseSearchParams, AdditionalQuery, YearRange
 
 logger = logging.getLogger(__name__)
 

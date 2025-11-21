@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Any
+
 from shared.models import Document, SearchRequest
 
 class BaseRetriever(ABC):

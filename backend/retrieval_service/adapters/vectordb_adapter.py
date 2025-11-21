@@ -1,14 +1,15 @@
-from typing import List, Dict, Any, Optional
-from .base_adapters import BaseRetriever
-from shared.models import Document, SearchRequest, QueryOperator, RetrievalRoute
-from scrapers.search_params import VectorSearchParams
+from typing import List
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import pickle
 import sqlite3
-from config import settings
 import logging
+
+from retrieval_service.adapters.base_adapters import BaseRetriever
+from retrieval_service.scrapers.search_params import VectorSearchParams
+from retrieval_service.config import settings
+from shared.models import Document, SearchRequest, QueryOperator, RetrievalRoute
 
 
 
@@ -55,7 +56,7 @@ class VectorDBAdapter(BaseRetriever):
         filters = request.filters
 
         query_1 = queries.query_1
-        vector_1 = np.array(self.encoder.encode([query_1]), dtype='float32')
+        
         
         query_2 = None
         vector_2 = None
@@ -66,14 +67,23 @@ class VectorDBAdapter(BaseRetriever):
 
         # Query 2, 3이 존재하고 NOT 연산자가 아닐 경우에만 벡터 생성
         if queries.query_2:
-            if queries.operator_1 is not QueryOperator.NOT:
+            if queries.operator_1 is QueryOperator.AND:
+                query_1 += " " + queries.query_2
+            if queries.operator_1 is QueryOperator.OR:
                 query_2 = queries.query_2
-                vector_2 = np.array(self.encoder.encode([query_2]), dtype='float32')
-
+                
         if queries.query_3:
-            if queries.operator_2 is not QueryOperator.NOT:
-                query_3 = queries.query_3
-                vector_3 = np.array(self.encoder.encode([query_3]), dtype='float32')
+            if queries.operator_2 is QueryOperator.AND:
+                query_1 += " " + queries.query_3
+            if queries.operator_2 is QueryOperator.OR:
+                if not query_2:
+                    query_2 = queries.query_3
+                else:
+                    query_3 = queries.query_3
+
+        vector_1 = np.array(self.encoder.encode([query_1], show_progress_bar=False), dtype='float32') if query_1 else None
+        vector_2 = np.array(self.encoder.encode([query_2], show_progress_bar=False), dtype='float32') if query_2 else None
+        vector_3 = np.array(self.encoder.encode([query_3], show_progress_bar=False), dtype='float32') if query_3 else None
 
         # Vector DB의 경우 필터는 year_range 밖에 없음.
         if filters.get("year_range"):

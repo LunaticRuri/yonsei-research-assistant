@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from enum import Enum
-from typing import List, Optional, Dict, Tuple, Union, Any
+from typing import List, Optional, Dict, Union, Any
 from datetime import datetime
 
 # ===== 기본 모델들 =====
@@ -91,7 +91,7 @@ class ElectronicSearchField(str, Enum):
 class SearchQueries(BaseModel):
     query_1: str
     search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
-    operator_1: QueryOperator
+    operator_1: Optional[QueryOperator] = None
     query_2: Optional[str] = None
     search_field_2: Optional[Union[str, LibrarySearchField, ElectronicSearchField]] = None
     operator_2: Optional[QueryOperator] = None

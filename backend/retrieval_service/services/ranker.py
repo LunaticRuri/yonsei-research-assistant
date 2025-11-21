@@ -1,10 +1,10 @@
 from typing import List, Dict
-from shared.models import Document, RankedDocument
 from sentence_transformers import CrossEncoder
-from config import settings
 import logging
-import numpy as np
 from collections import defaultdict
+
+from retrieval_service.config import settings
+from shared.models import Document, RankedDocument
 
 class RankerService:
     """여러 소스의 검색 결과를 융합하고 재순위화"""

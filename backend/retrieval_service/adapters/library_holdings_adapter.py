@@ -1,18 +1,8 @@
 from typing import List
-from .base_adapters import BaseRetriever
-from config import settings
-from scrapers.library_holdings_scraper import LibraryHoldingsScraper, LibraryHoldingsSearchParams
-import os
-import sys
+import logging
 
-# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
-# 현재위치(search) -> 상위(retrieval-service) -> 상위(backend)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-service_root = os.path.abspath(os.path.join(current_dir, "../../")) # 2단계 상위로 이동
-sys.path.append(service_root)
-
-
-from scrapers.search_params import AdditionalQuery, YearRange
+from retrieval_service.adapters.base_adapters import BaseRetriever
+from retrieval_service.scrapers.library_holdings_scraper import LibraryHoldingsScraper, LibraryHoldingsSearchParams
 from shared.models import (
     RetrievalRoute,
     Document,
@@ -21,7 +11,8 @@ from shared.models import (
     HoldingsMaterialType,
     LibraryHoldingInfo
 )
-import logging
+
+
 
 class LibraryHoldingsAdapter(BaseRetriever):
     """연세대학교 도서관 소장자료(단행본 등) 어댑터"""

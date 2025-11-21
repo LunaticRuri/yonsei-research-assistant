@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from shared.models import SearchRequest, RetrievalResult
-from services.search_executor import SearchExecutor
-from config import settings
 import logging
+
+from retrieval_service.services.search_executor import SearchExecutor
+from retrieval_service.config import settings
 
 # 로깅 설정
 logging.basicConfig(

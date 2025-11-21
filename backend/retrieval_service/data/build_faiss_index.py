@@ -1,17 +1,10 @@
-# faiss_build.py
 import sqlite3
 import numpy as np
 import faiss
 import pickle
 import os
 
-# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
-# 현재위치 -> 상위(data) -> 상위(retrieval-service)
-from pathlib import Path
-import sys
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-from config import settings
+from retrieval_service.config import settings
 
 # Metadata Database Paths
 DATABASE_PATH = settings.METADATA_DB_PATH

@@ -1,9 +1,10 @@
 from typing import List
-from shared.models import RankedDocument, CRAGResult, RelevanceLevel
 from openai import AsyncOpenAI
 from config import settings
 import logging
 import json
+
+from shared.models import RankedDocument, CRAGResult, RelevanceLevel
 
 class RefinerService:
     """CRAG (Corrective RAG) - 검색 결과 품질 평가"""

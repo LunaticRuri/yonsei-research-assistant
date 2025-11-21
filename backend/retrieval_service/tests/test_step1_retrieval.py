@@ -6,18 +6,10 @@ SearchExecutor의 Step 1 (검색) 부분만 테스트합니다.
 - SearchRequest → 각 어댑터별 검색 파라미터 변환 확인
 - 실제 연세대 도서관 스크래핑 동작 확인
 """
-
 import asyncio
 import logging
-
-# 현재 파일의 위치를 기준으로 프로젝트 루트(yonsei-research-assistant) 경로를 찾아 sys.path에 추가
-# 현재위치 -> 상위(tests) -> 상위(retrieval-service) -> 상위(backend)
-from pathlib import Path
 import sys
-project_root = Path(__file__).parent.parent.parent
-service_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(service_root))
+import argparse
 
 from shared.models import (
     SearchRequest, 
@@ -27,7 +19,7 @@ from shared.models import (
     ElectronicSearchField,
     LibrarySearchField
 )
-from services.retriever import RetrieverService
+from retrieval_service.services.retriever import RetrieverService
 
 # 로깅 설정
 logging.basicConfig(
@@ -100,8 +92,7 @@ async def test_library_holdings_search():
     search_request = SearchRequest(
         queries=SearchQueries(
             query_1="인공지능",
-            search_field_1=LibrarySearchField.TITLE,
-            operator_1=QueryOperator.AND
+            search_field_1=LibrarySearchField.TITLE
         ),
         routes=[RetrievalRoute.YONSEI_HOLDINGS],
         filters={
@@ -149,15 +140,18 @@ async def test_vectordb_search():
     # 검색 요청 생성
     search_request = SearchRequest(
         queries=SearchQueries(
-            query_1="artificial intelligence",
-            operator_1=QueryOperator.AND
+            query_1="인공지능",
+            search_field_1='vector',
+            operator_1=QueryOperator.AND,
+            query_2="수학",
+            search_field_2='vector'
         ),
         routes=[RetrievalRoute.VECTOR_DB],
         filters={
             "year_range": (2020, 2024)
         },
         top_k=5,
-        user_query="AI 관련 도서"
+        user_query="AI와 수학 관련 도서"
     )
     
     logger.info(f"Search Query: {search_request.queries.query_1}")
@@ -196,8 +190,7 @@ async def test_multi_source_search():
     search_request = SearchRequest(
         queries=SearchQueries(
             query_1="deep learning",
-            search_field_1=ElectronicSearchField.TITLE,
-            operator_1=QueryOperator.AND
+            search_field_1=ElectronicSearchField.TITLE
         ),
         routes=[
             RetrievalRoute.YONSEI_ELECTRONICS,
@@ -249,29 +242,32 @@ async def test_multi_source_search():
 
 async def main():
     """전체 테스트 실행"""
+    parser = argparse.ArgumentParser(description="Step 1 (Retrieval) 테스트 스크립트")
+    parser.add_argument("--test", type=str, choices=["electronic", "library", "vector", "multi", "all"], default="all", help="실행할 테스트 선택 (기본값: all)")
+    args = parser.parse_args()
+
     logger.info("Starting Step 1 (Retrieval) Tests\n")
     
-    results = {
-        "Electronic Resources": False,
-        "Library Holdings": False,
-        "Vector DB": False,
-        "Multi-Source": False
-    }
+    results = {}
     
     # Test 1: 전자자료 검색
-    results["Electronic Resources"] = await test_electronic_resources_search()
-    await asyncio.sleep(2)  # 요청 간 지연
+    if args.test in ["electronic", "all"]:
+        results["Electronic Resources"] = await test_electronic_resources_search()
+        if args.test == "all": await asyncio.sleep(2)  # 요청 간 지연
     
     # Test 2: 도서관 소장자료 검색
-    results["Library Holdings"] = await test_library_holdings_search()
-    await asyncio.sleep(2)
+    if args.test in ["library", "all"]:
+        results["Library Holdings"] = await test_library_holdings_search()
+        if args.test == "all": await asyncio.sleep(2)
     
     # Test 3: 벡터 DB 검색
-    results["Vector DB"] = await test_vectordb_search()
-    await asyncio.sleep(2)
+    if args.test in ["vector", "all"]:
+        results["Vector DB"] = await test_vectordb_search()
+        if args.test == "all": await asyncio.sleep(2)
     
     # Test 4: 멀티 소스 검색
-    results["Multi-Source"] = await test_multi_source_search()
+    if args.test in ["multi", "all"]:
+        results["Multi-Source"] = await test_multi_source_search()
     
     # 결과 요약
     logger.info("\n" + "=" * 80)
@@ -281,6 +277,10 @@ async def main():
         status = "✅ PASSED" if passed else "❌ FAILED"
         logger.info(f"{test_name}: {status}")
     
+    if not results:
+        logger.info("No tests were run.")
+        return True
+
     all_passed = all(results.values())
     logger.info(f"\nOverall: {'✅ ALL TESTS PASSED' if all_passed else '❌ SOME TESTS FAILED'}")
     

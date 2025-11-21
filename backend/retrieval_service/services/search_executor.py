@@ -1,9 +1,12 @@
-from shared.models import SearchRequest, RetrievalResult, RankedDocument
-from .retriever import RetrieverService
-from .ranker import RankerService
-from .refiner import RefinerService
 import logging
 import time
+
+from shared.models import SearchRequest, RetrievalResult, RankedDocument
+from retrieval_service.services.retriever import RetrieverService
+from retrieval_service.services.ranker import RankerService
+from retrieval_service.services.refiner import RefinerService
+
+
 
 class SearchExecutor:
     """전체 검색 파이프라인 조정"""

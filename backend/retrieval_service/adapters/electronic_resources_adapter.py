@@ -1,8 +1,9 @@
 from typing import List
-from .base_adapters import BaseRetriever
-from config import settings
-from scrapers.electronic_resources_scraper import ElectronicResourcesScraper, ElectronicSearchParams
-from scrapers.search_params import AdditionalQuery, YearRange
+import logging
+
+from retrieval_service.adapters.base_adapters import BaseRetriever
+from retrieval_service.config import settings
+from retrieval_service.scrapers.electronic_resources_scraper import ElectronicResourcesScraper, ElectronicSearchParams
 from shared.models import (
     RetrievalRoute,
     Document,
@@ -10,7 +11,8 @@ from shared.models import (
     ElectronicSearchField,
     ElectronicResourceInfo
 )
-import logging
+
+
 
 class ElectronicResourcesAdapter(BaseRetriever):
     """연세대학교 학술정보원 전자자료 어댑터"""
@@ -109,7 +111,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
                 doc = Document(
                     content=self._extract_text(item),
                     metadata={
-                        'source': RetrievalRoute.ELECTRONIC_RESOURCES.value,
+                        'source': RetrievalRoute.YONSEI_HOLDINGS.value,
                         'title': item.title,
                         'author': "; ".join(item.author) if item.author else "",
                         'publication_year': item.publication_year,
