@@ -7,21 +7,18 @@ from datetime import datetime
 
 class ServiceStatus(BaseModel):
     """서비스 상태"""
-
     name: str
     status: str
     last_check: Optional[datetime] = None
 
 class SystemStatus(BaseModel):
     """전체 시스템 상태"""
-    
     overall_status: str
     services: List[ServiceStatus]
     active_sessions: int
 
 # ===== 대화 기록 =====
 # Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
-# FIXME: 프론트앤드가 없는 상황에서 이 모델이 실제로 사용되는지 논의 필요
 class Conversation(BaseModel):
     id: str  # 각 대화의 고유 ID (라우팅에 사용)
     title: str
@@ -31,7 +28,6 @@ class Conversation(BaseModel):
 
 class DialogueRequest(BaseModel):
     """소크라테스식 대화 요청"""
-
     session_id: str
     message: str
     conversation_history: Optional[List[str]] = []
@@ -39,30 +35,30 @@ class DialogueRequest(BaseModel):
 # ================== strategy-service 부분 ==================
 
 # ===== 라우팅 =====
-# [!] 충돌 해결:
-# 우리가 테스트한 'RoutingDecision' 모델 (213c214)을 선택하고,
-# 충돌이 발생한 'RouteRequest' (HEAD)와 
-# 그 짝이었던 'RouteResponse' (HEAD)는 제거합니다.
-
+# [수정됨] 창현님의 검색어 추출(Query Translation) 연구를 위해 필드 추가
 class RoutingDecision(BaseModel):
-    """라우팅 결정 결과를 담는 모델"""
+    """라우팅 및 검색 전략 결정 모델"""
 
     route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
     reason: str = Field(..., description="라우팅 결정 이유")
+    
+    # [!] 아래 필드가 추가되었습니다.
+    search_queries: List[str] = Field(
+        default=[],
+        description="검색 엔진에 입력할 최적화된 키워드 리스트 (예: ['굴패각 활용', '석회석 소성'])"
+    )
 
 # ================== retrieval-service 부분 ==================
 
 # ===== Strategy → Retrieval 요청 =====
 class QueryOperator(str, Enum):
     """검색 연산자"""
-
     AND = "and" # 필수
-    OR = "or"  # 선택
+    OR = "or"   # 선택
     NOT = "not" # 제외
 
 class RetrievalRoute(str, Enum):
     """검색 소스"""
-
     VECTOR_DB = "vector_book_db" # 국립중앙도서관 도서 벡터 DB
     YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
     YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
@@ -70,7 +66,6 @@ class RetrievalRoute(str, Enum):
 
 class LibrarySearchField(str, Enum):
     """검색 필드 타입 (도서관 소장자료 전용)"""
-
     TOTAL = "TOTAL"  # 전체
     TITLE = "1"  # 서명(책제목)
     AUTHOR = "2"  # 저자
@@ -79,7 +74,6 @@ class LibrarySearchField(str, Enum):
 
 class HoldingsMaterialType(str, Enum):
     """자료 유형 (도서관 소장자료만)"""
-
     TOTAL = "TOTAL"  # 전체
     BOOK = "m"  # 단행본
     SERIAL = "s"  # 연속간행물
@@ -90,7 +84,6 @@ class HoldingsMaterialType(str, Enum):
 
 class ElectronicSearchField(str, Enum):
     """검색 필드 타입 (전자자료 전용)"""
-
     TOTAL = ""      # 전체
     KEYWORD = "TX"  # 키워드
     TITLE = "TI"     # 제목
@@ -99,7 +92,6 @@ class ElectronicSearchField(str, Enum):
 
 class SearchQueries(BaseModel):
     """멀티 쿼리 모델 (최대 3개 쿼리 지원)"""
-
     query_1: str
     search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
     operator_1: Optional[QueryOperator] = None
