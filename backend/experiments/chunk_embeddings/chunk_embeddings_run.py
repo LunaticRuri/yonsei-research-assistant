@@ -1,6 +1,5 @@
 import sqlite3
 import os
-import sys
 from sentence_transformers import SentenceTransformer
 import torch
 from tqdm import tqdm
@@ -8,10 +7,16 @@ import numpy as np
 
 # Configuration
 # TODO: 실제 데이터베이스 경로로 변경
-SOURCE_DB_PATH = "books.db" 
+SOURCE_DB_PATH = "./data/book_docs.db" 
 MODEL_NAME = "nlpai-lab/KURE-v1"
 
+# Performance Tuning
+# GPU 메모리가 넉넉하다면 이 값들을 늘려 속도를 높일 수 있습니다.
+ENCODE_BATCH_SIZE = 512     # model.encode 내부 배치 사이즈 (기본값 32)
+PROCESSING_BATCH_SIZE = 2048 # 한 번에 인코딩/DB저장할 청크의 누적 개수
+
 # Output configurations
+'''
 OUTPUT_CONFIGS = [
     {
         "filename": "book_embeddings_200.db",
@@ -26,6 +31,16 @@ OUTPUT_CONFIGS = [
         "overlap": 50
     }
 ]
+'''
+OUTPUT_CONFIGS = [
+    {
+        "filename": "book_embeddings_200_overlap_50.db",
+        "table_name": "book_embeddings_200",
+        "chunk_size": 200,
+        "overlap": 50
+    }
+]
+
 
 def get_db_connection(db_path):
     return sqlite3.connect(db_path)
@@ -103,7 +118,14 @@ def main():
 
     # Load Model
     print(f"Loading model: {MODEL_NAME}")
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    if torch.cuda.is_available():
+        device = 'cuda'
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+    else:
+        device = 'cpu'
+        
     print(f"Using device: {device}")
     
     try:
@@ -117,7 +139,7 @@ def main():
     try:
         src_conn = get_db_connection(SOURCE_DB_PATH)
         src_cursor = src_conn.cursor()
-        src_cursor.execute("SELECT isbn, doc FROM book_embeddings")
+        src_cursor.execute("SELECT isbn, doc FROM book_docs")
         all_data = src_cursor.fetchall()
         src_conn.close()
     except sqlite3.Error as e:
@@ -151,10 +173,17 @@ def main():
         tgt_conn = get_db_connection(target_db)
         create_table(tgt_conn, table_name)
         
+        # Buffers for batch processing
+        chunk_buffer = [] # List of text chunks
+        meta_buffer = []  # List of (isbn, chunk_index) tuples
+        
         # Process in loop
-        # We commit after every book to ensure resumability
+        # We accumulate chunks and process in batches to utilize GPU better
         for isbn, doc in tqdm(data_to_process, desc="Embedding"):
             if not doc:
+                continue
+
+            if len(doc) < 100:
                 continue
                 
             try:
@@ -162,21 +191,46 @@ def main():
                 if not chunks:
                     continue
                 
-                # Encode
-                embeddings = model.encode(chunks, convert_to_numpy=True, show_progress_bar=False)
+                # Add chunks to buffer
+                for i, chunk in enumerate(chunks):
+                    chunk_buffer.append(chunk)
+                    meta_buffer.append((isbn, i))
                 
-                rows = []
-                for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
-                    rows.append((isbn, i, chunk, emb.tobytes()))
-                
-                tgt_conn.executemany(f"INSERT OR REPLACE INTO {table_name} (isbn, chunk_index, doc, embedding) VALUES (?, ?, ?, ?)", rows)
-                tgt_conn.commit()
+                # If buffer is full enough, process
+                if len(chunk_buffer) >= PROCESSING_BATCH_SIZE:
+                    # Encode
+                    embeddings = model.encode(chunk_buffer, batch_size=ENCODE_BATCH_SIZE, convert_to_numpy=True, show_progress_bar=True)
+                    
+                    rows = []
+                    for (isbn_val, chunk_idx), chunk_text_val, emb in zip(meta_buffer, chunk_buffer, embeddings):
+                        rows.append((isbn_val, chunk_idx, chunk_text_val, emb.tobytes()))
+                    
+                    tgt_conn.executemany(f"INSERT OR REPLACE INTO {table_name} (isbn, chunk_index, doc, embedding) VALUES (?, ?, ?, ?)", rows)
+                    tgt_conn.commit()
+                    
+                    # Clear buffers
+                    chunk_buffer = []
+                    meta_buffer = []
                 
             except Exception as e:
                 print(f"Error processing ISBN {isbn}: {e}")
                 # Continue to next book
                 continue
+        
+        # Process remaining chunks in buffer
+        if chunk_buffer:
+            try:
+                embeddings = model.encode(chunk_buffer, batch_size=ENCODE_BATCH_SIZE, convert_to_numpy=True, show_progress_bar=True)
                 
+                rows = []
+                for (isbn_val, chunk_idx), chunk_text_val, emb in zip(meta_buffer, chunk_buffer, embeddings):
+                    rows.append((isbn_val, chunk_idx, chunk_text_val, emb.tobytes()))
+                
+                tgt_conn.executemany(f"INSERT OR REPLACE INTO {table_name} (isbn, chunk_index, doc, embedding) VALUES (?, ?, ?, ?)", rows)
+                tgt_conn.commit()
+            except Exception as e:
+                print(f"Error processing remaining chunks: {e}")
+
         tgt_conn.close()
         print(f"Completed {target_db}")
 
