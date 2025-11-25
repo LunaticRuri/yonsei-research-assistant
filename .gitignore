@@ -192,6 +192,7 @@ $RECYCLE.BIN/
 # Project specific
 # Scraped data
 scraped_data/
+processed_data/
 raw_data/
 
 # Model files (large files)
@@ -228,3 +229,4 @@ ssl/
 
 playground.py
 .VSCodeCounter/
+*.jsonl
