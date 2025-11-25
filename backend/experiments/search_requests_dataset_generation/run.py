@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 import asyncio
 from typing import List, Optional, Union
@@ -9,10 +8,7 @@ from google.genai import types
 from dotenv import load_dotenv
 load_dotenv()
 
-# Add project root to sys.path to import backend modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-
-from backend.shared.models import SearchRequest, SearchQueries, RetrievalRoute, LibrarySearchField, ElectronicSearchField, QueryOperator
+from shared.models import SearchRequest, SearchQueries, RetrievalRoute, LibrarySearchField, ElectronicSearchField, QueryOperator
 
 # KDC 100 Divisions
 KDC_DIVISIONS = {
@@ -37,6 +33,7 @@ KDC_DIVISIONS = {
     "900": "역사", "910": "아시아", "920": "유럽", "930": "아프리카", "940": "북아메리카",
     "950": "남아메리카", "960": "오세아니아, 양극지방", "970": "[미사용]", "980": "지리", "990": "전기"
 }
+EXCLUDE_KDC_CODES = {"030", "040", "050", "060", "080", "990"}
 
 # Pydantic model for Gemini response
 class GeneratedQuestion(BaseModel):
@@ -56,23 +53,78 @@ async def generate_dataset():
     print(f"Starting generation for {len(KDC_DIVISIONS)} KDC divisions...")
 
     for code, name in KDC_DIVISIONS.items():
+        if code in EXCLUDE_KDC_CODES:
+            continue
         if name == "[미사용]":
             continue
-            
-        prompt = f"""
-        KDC (Korean Decimal Classification) 주제 '{code} {name}'에 해당하는 분야에 대해 궁금증이나 학문적 내용이 드러나는 질문 하나와 그 질문에서 추출할 수 있는 검색 키워드들을 생성해주세요.
+        # TODO: 논문 부분 테스트 할 때는 books_prompt 대신 electronics_prompt 사용
+        electronics_prompt = f"""
+        KDC (Korean Decimal Classification) 주제 '{code} {name}'에 해당하는 분야에 대한 궁금증이 드러나는 학문적 질문 하나와 그 질문에서 추출할 수 있는 검색 키워드들을 생성해.
         
         예시:
-        주제: 365 민법
-        질문: "민법상 불법행위 책임(제750조) 성립 요건 중 위법성의 판단 기준을 어떻게 해석해야 하는가? 특히, 영업 방해나 명예 훼손과 같은 무형적 손해에 대한 위법성 조각 사유(예: 정당행위)의 구체적인 적용 범위는 무엇인가?"
-        키워드: ["불법행위 책임 요건", "위법성 판단 기준", "위법성 조각 사유", "영업 방해", "명예 훼손", "정당행위"]
+        주제: 360 법률, 법학
+        질문: "민법상 불법행위 책임(제750조) 성립 요건 중 위법성의 판단 기준을 어떻게 해석해야 하는가?"
+        키워드: ["불법행위 책임 요건", "위법성 판단 기준"]
         
-        위 예시와 같은 형식으로 JSON 객체를 생성해주세요.
+        주의사항!
+        1. 질문은 하나의 질문 내용만 담고 있어야 해. 아래는 각각 잘못된 예시와 올바른 예시야.
+        잘못된 예시:
+            기후 변화가 특정 지역의 식생 분포에 미치는 영향은 무엇이며, 이를 연구하는 주요 방법론은 어떤 것들이 있는가?
+            블랙홀은 어떻게 형성되며, 그 특성은 무엇인가?
+            -> 2개의 질문 내용을 담고 있어서 안됨.
+        올바른 예시:
+            기후 변화가 아열대 지역의 식생 분포에 미치는 주요 영향은 무엇인가?
+            인간의 자유의지는 인과론적 결정론과 양립할 수 있는가, 아니면 본질적으로 충돌하는 개념인가?
+            -> 하나의 질문 내용만 담고 있어서 됨.
+        
+        2. 검색 키워드는 최소 1개, 그리고 3개 까지 생성 가능. 각 키워드가 서로 중복된 내용을 담으면 안됨.
+        질문: "천도교의 핵심 교리인 '인내천(人乃天)' 사상이 현대 사회에 어떤 의미를 가지는가?" 인 경우
+        잘못된 예시:
+            키워드: ["천도교 교리", "인내천 사상", "천도교 인내천"]
+            -> 키워드가 중복된 내용을 담고 있어서 안됨.
+        올바른 예시:
+            키워드: ["천도교 인내천", "현대 사회"]
+
+        3. 키워드는 되도록이면 2개 이하 단어, 검색어가 너무 길거나 복잡하면 안됨.
+
+        4. 최대한 명확하고 간단한 키워드로 생성. 질문을 반복하는 키워드보다는 질문을 해결하는 자료(특히 논문, 학술지)를 찾게 도와주는 키워드가 좋다.
+                    
+        위 예시와 같은 형식으로 JSON 객체를 생성해.
         """
+        
+        books_prompt = f"""
+        KDC (Korean Decimal Classification) 주제 '{code} {name}'에 해당하는 분야에 대한 일반적인 질문 하나와 그 질문에서 추출할 수 있는 검색 키워드들을 생성해.
+        예시:
+        주제: 320 경제학
+        질문: "인플레이션이 국가 경제에 미치는 주요 영향은 무엇인가?"
+        키워드: ["인플레이션 영향", "국가 경제"]
+        주의사항!
+        1. 질문은 하나의 질문 내용만 담고 있어야 해. 아래는 각각 잘못된 예시와 올바른 예시야.
+        잘못된 예시:
+            기후 변화가 국가 경제에 영향은 무엇이며, 이를 연구하는 주요 방법론은 어떤 것들이 있는가?
+            블랙홀은 어떻게 형성되며, 그 특성은 무엇인가?
+            -> 2개의 질문 내용을 담고 있어서 안됨.
+        올바른 예시:
+            기후 변화가 국가 경제에 미치는 주요 영향은?
+            블랙홀의 어떻게 형성되는가?
+            -> 하나의 질문 내용만 담고 있어서 됨.
+        2. 검색 키워드는 최소 1개, 그리고 3개 까지 생성 가능. 각 키워드가 서로 중복된 내용을 담으면 안됨.
+        질문: "천도교의 핵심 교리인 '인내천(人乃天)' 사상은 무엇인가" 인 경우
+        잘못된 예시:
+            키워드: ["천도교 교리", "인내천 사상", "천도교 인내천"]
+            -> 키워드가 중복된 내용을 담고 있어서 안됨.
+        올바른 예시:
+            키워드: ["천도교", "인내천"]
+            -> 키워드가 중복된 내용을 담고 있지 않아서 됨.
+        3. 키워드는 되도록이면 2개 이하 단어, 검색어가 너무 길거나 복잡하면 안됨.
+        4. 최대한 명확하고 간단한 키워드로 생성. 질문을 반복하는 키워드보다는 질문을 해결하는 자료(책, 단행본)를 찾게 도와주는 키워드가 좋다.
+        """
+
+        prompt = books_prompt
 
         try:
             response = client.models.generate_content(
-                model='gemini-2.5-flash', # Or gemini-1.5-pro, using a likely available model
+                model='gemini-2.5-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type='application/json',
@@ -85,19 +137,33 @@ async def generate_dataset():
                 generated_q = GeneratedQuestion(**data)
                 
                 # Convert to SearchRequest
-                # Join keywords with spaces if 3 or more, as per instruction
-                # "이때 키워드가 3개 이상이면 한 쿼리에 띄어쓰기로 구분하여 이어 쓸수도 있음"
-                # We will join them all into query_1 for simplicity and effectiveness in vector search
-                query_str = " ".join(generated_q.keywords)
+                keywords = generated_q.keywords
                 
-                search_queries = SearchQueries(
-                    query_1=query_str,
-                    search_field_1="TOTAL" # Default to TOTAL
-                )
+                # Initialize with first keyword
+                search_queries_args = {
+                    "query_1": keywords[0] if keywords else "",
+                    "search_field_1": "TOTAL"
+                }
+                
+                # Add second keyword if exists
+                if len(keywords) > 1:
+                    search_queries_args["query_2"] = keywords[1]
+                    search_queries_args["search_field_2"] = "TOTAL"
+                    search_queries_args["operator_1"] = QueryOperator.AND
+                    
+                # Add third keyword if exists
+                if len(keywords) > 2:
+                    search_queries_args["query_3"] = keywords[2]
+                    search_queries_args["search_field_3"] = "TOTAL"
+                    search_queries_args["operator_2"] = QueryOperator.AND
+                
+                search_queries = SearchQueries(**search_queries_args)
                 
                 search_request = SearchRequest(
                     queries=search_queries,
-                    routes=[RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS, RetrievalRoute.YONSEI_ELECTRONICS]
+                    routes=[RetrievalRoute.VECTOR_DB],
+                    top_k=10,
+                    user_query=generated_q.question
                 )
                 
                 # We might want to store the original question too, but SearchRequest doesn't have it.
@@ -105,6 +171,8 @@ async def generate_dataset():
                 # The user said "SearchRequest 모델 규격에 맞추어 생성하면 된다".
                 # So we will append the SearchRequest dict.
                 
+                print(f"Generated for {code} {name}: Question: {generated_q.question}, Keywords: {keywords}")
+
                 dataset.append(search_request.model_dump(mode='json'))
                 print(f"Generated for {code} {name}")
                 

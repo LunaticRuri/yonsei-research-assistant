@@ -1,0 +1,1640 @@
+[
+  {
+    "queries": {
+      "query_1": "정보 탐색",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "탐색 전략",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "정보 탐색 시 효과적인 전략은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "서지학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "정의",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "연구 분야",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "서지학의 정의와 주요 연구 분야는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "정보 과잉",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "도서관 역할",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "정보 리터러시",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "정보 과잉 시대에 도서관은 어떤 역할을 해야 하는가?"
+  },
+  {
+    "queries": {
+      "query_1": "디지털 시대 신문",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "신문 역할",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "신문 미래",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "디지털 시대에 신문의 역할과 미래 전망은 어떻게 변화하고 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "향토자료",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "지역 역사",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "지역 문화",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "특정 지역의 향토자료는 주로 어떤 역사적, 문화적 정보들을 담고 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "도덕 의사결정",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "윤리학",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "철학",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "철학에서 도덕적 의사결정의 근거와 원칙은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "존재",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "형이상학",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "존재의 궁극적인 본질은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "지식 습득",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "인식론",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "인간은 어떻게 지식을 습득하는가?"
+  },
+  {
+    "queries": {
+      "query_1": "철학 분류",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "철학 체계",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "철학의 주요 분류 체계는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "유교 경학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "사서삼경",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "유교 경학에서 핵심 경전인 사서삼경은 어떤 내용을 담고 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "동양 사상",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "동양 사상의 주요 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "칸트",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "비판철학",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "칸트의 비판철학은 서양 철학사에 어떤 영향을 주었는가?"
+  },
+  {
+    "queries": {
+      "query_1": "논리학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "논리 개념",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "논리학의 근본 원리와 주요 개념은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "무의식",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "인간 행동",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "무의식이 인간 행동에 미치는 주요 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "도덕적 딜레마",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "윤리적 기준",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "도덕적 딜레마 상황에서 올바른 선택을 위한 윤리적 기준은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "불교 종파",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "불교 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "불교의 주요 종파는 무엇이며, 각 종파의 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "세계 종교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "종교 비교",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "보편적 가치",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "주요 세계 종교들이 공유하는 보편적인 가치와 차별적인 특성은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "불교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "사성제",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "불교의 핵심 교리인 사성제는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "기독교 교리",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "기독교 신앙",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "기독교의 주요 교리에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "도교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "사상",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "도교의 핵심 사상은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "천도교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "인내천",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "교리",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "천도교의 핵심 교리인 '인내천' 사상은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "힌두교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "윤회",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "힌두교의 주요 교리 중 하나인 윤회 사상은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "무함마드 생애",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "이슬람 창시",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "이슬람교의 창시자인 무함마드의 생애와 주요 업적은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "기타 제종교",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "종교 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "소수 종교",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "KDC 290 '기타 제종교' 분야에 포함되는 종교들의 일반적인 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "사회 불평등",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "불평등 원인",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "현대 사회",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대 사회에서 사회 불평등이 발생하는 주요 원인은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "통계 분석",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "분석 유형",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "통계 분석의 주요 유형에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "재정 정책",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "경제 성장",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "재정 정책이 경제 성장에 미치는 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "사회 불평등",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "불평등 원인",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대 사회에서 사회 불평등이 발생하는 주요 원인은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "민주주의",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "정치 체제",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "민주주의 정치 체제의 주요 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "전자정부",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "행정 효율성",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "전자정부 시스템 도입이 행정 효율성에 미치는 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "대한민국 헌법",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "헌법 원리",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "대한민국 헌법의 기본 원리는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "한국 교육 제도",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "교육 제도 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "대한민국 교육 제도의 주요 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "한국 결혼식",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "결혼 풍습",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "전통 예절",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "한국의 전통 결혼식에서 중요하게 여기는 풍습이나 예절은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "사이버전",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "현대 전쟁",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대 전쟁에서 사이버전의 중요성은 어느 정도인가?"
+  },
+  {
+    "queries": {
+      "query_1": "블랙홀",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "형성",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "블랙홀은 어떻게 형성되는가?"
+  },
+  {
+    "queries": {
+      "query_1": "미분",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "적분",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "미적분학",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "미적분학에서 미분과 적분의 기본적인 관계는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "양자역학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "불확정성 원리",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "양자역학에서 불확정성 원리는 무엇을 의미하는가?"
+  },
+  {
+    "queries": {
+      "query_1": "화학 반응 속도",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "영향 요인",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "화학 반응 속도에 영향을 미치는 주요 요인들은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "별 탄생",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "별 진화",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "별의 탄생과 진화 과정은 어떻게 되는가?"
+  },
+  {
+    "queries": {
+      "query_1": "지진 발생",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "판구조론",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "지진은 왜 발생하는가?"
+  },
+  {
+    "queries": {
+      "query_1": "광물",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "물리적 특성",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "광물을 식별하는 데 사용되는 주요 물리적 특성은 무엇인가요?"
+  },
+  {
+    "queries": {
+      "query_1": "세포 분열",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "분열 과정",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "세포 분열은 어떤 과정을 통해 이루어지는가?"
+  },
+  {
+    "queries": {
+      "query_1": "광합성",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "식물 생리",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "식물의 광합성 과정은 어떻게 이루어지는가?"
+  },
+  {
+    "queries": {
+      "query_1": "육상 척추동물",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "적응 전략",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "육상 척추동물이 환경에 적응하기 위한 주요 전략은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "지속가능 에너지",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "환경 문제",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "기술 기여",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "지속가능한 에너지 기술의 개발이 환경 문제 해결에 어떤 기여를 할 수 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "세균 감염",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "바이러스 감염",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "감염 차이점",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "세균 감염과 바이러스 감염의 주요 차이점은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "기후 변화",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "농업 생산성",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "기후 변화가 농업 생산성에 미치는 주요 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "지속 가능한 도시",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "환경 공학",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "지속 가능한 도시 개발을 위한 환경 공학적 접근 방식은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "한국 건축",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "전통 건축",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "건축 양식",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "한국 전통 건축 양식의 주요 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "자율주행",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "기계공학 기술",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "자율주행 자동차 개발에 필요한 기계공학 기술에는 어떤 것이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "반도체 소자",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "작동 원리",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "반도체 종류",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "반도체 소자의 작동 원리와 주요 종류는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "화학공정 설계",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "설계 요소",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "화학공정 설계에서 고려해야 할 핵심 요소는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "인더스트리 4.0",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "제조업 혁신",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "스마트 팩토리",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "인더스트리 4.0이 제조업에 미치는 주요 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "건강 증진",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "생활 습관",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대인의 건강 증진을 위한 효과적인 생활 습관은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "현대 미술",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "미술 사조",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대 미술의 주요 사조에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "조각 재료",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "조각",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "조각 예술에서 주로 사용되는 재료는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "전통 공예",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "공예 가치",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "공예 의미",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "전통 공예의 현대적 가치와 의미는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "서예",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "서예 종류",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "서예의 다양한 스타일과 그 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "현대 디자인",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "디자인 원칙",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "현대 디자인의 핵심 원칙에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "사진예술",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "현대 흐름",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "표현 방식",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "사진예술의 현대적 흐름과 주요 표현 방식에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "서양 음악",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "클래식 음악",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "음악 시대",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "서양 클래식 음악의 주요 시대별 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "공연 예술",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "매체 예술",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "융합",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "공연 예술과 매체 예술의 융합 사례는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "이스포츠",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문화 영향",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "이스포츠가 현대 사회에 미치는 문화적 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "언어 습득",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "아동 언어",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "언어 발달",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "어린이의 언어 습득 과정은 어떻게 이루어지는가?"
+  },
+  {
+    "queries": {
+      "query_1": "한글",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "창제 원리",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "한글 특징",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "한글 창제 원리와 그 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "중국어 방언",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "중국어",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "중국어의 주요 방언에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "한일 언어",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문법 비교",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "일본어와 한국어의 문법 구조적 공통점은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "영어 어원",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "영어 역사",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "언어 변화",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "영어의 어원과 역사적 변화 과정은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "독일어 학습",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "학습 방법",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "독일어를 효과적으로 학습하기 위한 주요 방법에는 어떤 것들이 있는가?"
+  },
+  {
+    "queries": {
+      "query_1": "프랑스어 문법",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문법 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "프랑스어의 주요 문법적 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "스페인어",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "포르투갈어",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "언어 특징",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "스페인어와 포르투갈어는 어떠한 언어적 특징을 가지는가?"
+  },
+  {
+    "queries": {
+      "query_1": "이탈리아어 음악 용어",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "음악 용어",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "이탈리아어로 된 주요 음악 용어들은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "제어 시스템",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "제어 원리",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "다양한 분야에서 적용되는 제어 시스템의 기본 원리는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "한국 소설사",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "소설 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "한국 소설사의 주요 시대별 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "한국 현대시",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "현대시 경향",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "한국 현대시의 주요 경향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "중국 문학사",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문학 시대 구분",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "시대별 특징",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "중국 문학사의 주요 시대 구분과 각 시대의 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "아시아 문학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "지역 문학 특성",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "문학 교류",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "아시아 각 지역 문학의 독자적인 특성과 상호 영향 관계는 어떠한가?"
+  },
+  {
+    "queries": {
+      "query_1": "영미 문학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "여성 작가",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "문학 기여",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "영미 문학에서 여성 작가들이 기여한 주요 부분은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "독일 낭만주의",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문학 특징",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "독일 낭만주의 문학의 주요 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "프랑스 문학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "문학 시대",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "프랑스 문학의 주요 시대별 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "스페인 문학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "포르투갈 문학",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "문학 특징",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "스페인 및 포르투갈 문학의 주요 흐름과 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "단테 신곡",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "이탈리아 문학 영향",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "중세 문학",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "단테의 '신곡'이 이탈리아 문학사에 미친 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "비교문학",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "상호텍스트성",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "문화 간",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "비교문학 연구에서 문화 간의 상호텍스트성 분석은 어떤 의미를 가지는가?"
+  },
+  {
+    "queries": {
+      "query_1": "조선 시대",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "양반",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "생활상",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "조선 시대 양반 계층의 생활상은 어떠했는가?"
+  },
+  {
+    "queries": {
+      "query_1": "아시아 자연환경",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "아시아 지역차이",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "아시아 지리",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "아시아 대륙의 자연 환경적 특징과 그로 인한 지역별 차이는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "유럽 연합",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "EU 정책",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "정책 목표",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "유럽 연합의 주요 정책 목표는 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "아프리카 식민지배",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "아프리카 역사",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "탈식민주의 아프리카",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "아프리카 대륙의 식민 지배 역사는 어떻게 전개되었는가?"
+  },
+  {
+    "queries": {
+      "query_1": "북아메리카 원주민",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "원주민 문화",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "북아메리카 원주민의 주요 문화적 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "남아메리카",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "지리",
+      "search_field_2": "TOTAL",
+      "operator_2": null,
+      "query_3": null,
+      "search_field_3": null
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "남아메리카 대륙의 주요 지리적 특징은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "오세아니아 기후변화",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "양극지방 환경영향",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "기후변화 영향",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "오세아니아와 양극지방의 기후 변화에 따른 환경 영향은 무엇인가?"
+  },
+  {
+    "queries": {
+      "query_1": "기후대 분포",
+      "search_field_1": "TOTAL",
+      "operator_1": "and",
+      "query_2": "세계 기후",
+      "search_field_2": "TOTAL",
+      "operator_2": "and",
+      "query_3": "기후 특징",
+      "search_field_3": "TOTAL"
+    },
+    "routes": [
+      "vector_book_db"
+    ],
+    "filters": null,
+    "top_k": 10,
+    "user_query": "세계 주요 기후대의 분포와 특징은 무엇인가?"
+  }
+]
