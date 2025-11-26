@@ -296,5 +296,5 @@ class RetrievalResult(BaseModel):
     )
     needs_requestioning: bool = Field(
         default=False,
-        description="CRAG에서 incorrect 비율이 높아 웹 검색 필요 여부"
+        description="CRAG에서 incorrect 비율이 높아 질문 수정 또는 재검색 필요 여부"
     )
