@@ -16,9 +16,12 @@ class Settings(BaseSettings):
     SERVICE_PORT: int = 8003
     
     # VectorDB (FAISS + Sqlite3) 설정
+    # NOTE: 실험할 때 적절하게 경로 수정
     FAISS_INDEX_PATH: str | None = os.getenv("FAISS_INDEX_PATH")
     FAISS_ID_TO_METADATA_PATH: str | None = os.getenv("FAISS_ID_TO_METADATA_PATH")
     METADATA_DB_PATH: str | None = os.getenv("METADATA_DB_PATH")
+    EMBEDDINGS_DB_PATH: str | None = os.getenv("EMBEDDINGS_DB_PATH")
+    EMBEDDINGS_DB_TABLE: str = "book_embeddings"
 
     # 임베딩 모델 설정
     VECTOR_EMBEDDING_MODEL: str = "nlpai-lab/KURE-v1"

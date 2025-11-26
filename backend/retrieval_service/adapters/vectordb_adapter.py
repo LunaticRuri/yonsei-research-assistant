@@ -115,7 +115,7 @@ class VectorDBAdapter(BaseRetriever):
         try:
             retrieved_faiss_ids = set()
             
-            # Query 1 FAISS 검색 (top_k * 2로 오버페칭, 필터링 후 부족할 수 있음)
+            # Query 1 FAISS 검색 (top_k * 2로 오버페칭)
             distances_1, faiss_ids_1 = self.index.search(search_params.vector_1, top_k * 2)
 
             if faiss_ids_1.size != 0 and faiss_ids_1[0][0] != -1:
@@ -134,8 +134,9 @@ class VectorDBAdapter(BaseRetriever):
                     retrieved_faiss_ids.update(faiss_ids_3[0])
             
             # faiss_id를 메타데이터 ID(ISBN)로 변환
-            retrieved_isbns = [self.metadata_faiss_map[i] for i in retrieved_faiss_ids if i in self.metadata_faiss_map]
-            
+            retrieved_isbn_id_tuples = [self.metadata_faiss_map[i] for i in retrieved_faiss_ids if i in self.metadata_faiss_map]
+            retrieved_isbns = list(set([isbn for isbn, chunk_index in retrieved_isbn_id_tuples]))
+
             # SQLite에서 최종 정보 조회 (필터 적용)
             if not retrieved_isbns:
                 return []
@@ -147,7 +148,7 @@ class VectorDBAdapter(BaseRetriever):
                 to_year = search_params.year_range.to_year
                 sql = f"""
                     SELECT isbn, title, publication_year, intro, toc, nlk_subjects 
-                    FROM books 
+                    FROM book_metadata
                     WHERE isbn IN ({placeholders}) 
                     AND ((publication_year BETWEEN ? AND ?) or (publication_year = 0))
                 """
@@ -156,7 +157,7 @@ class VectorDBAdapter(BaseRetriever):
                 placeholders = ','.join('?' for _ in retrieved_isbns)
                 sql = f"""
                     SELECT isbn, title, publication_year, intro, toc, nlk_subjects 
-                    FROM books 
+                    FROM book_metadata
                     WHERE isbn IN ({placeholders})
                 """
                 params = retrieved_isbns

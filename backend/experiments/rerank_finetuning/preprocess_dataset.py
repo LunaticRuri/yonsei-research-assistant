@@ -2,8 +2,7 @@ import json
 import re
 import os
 import glob
-import multiprocessing
-import time
+import concurrent.futures
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -126,23 +125,23 @@ def generate_hard_negative(query, positive):
     """Gemini를 사용하여 Hard Negative 생성"""
     try:
         prompt = f"""
-        You are an expert in generating training data for Information Retrieval.
-        Given the following Query and Positive Passage, generate a "Hard Negative" passage in Korean.
+        당신은 정보 검색을 위한 훈련 데이터를 생성하는 전문가다.
+        다음 쿼리와 긍정 패시지를 고려하여, 한국어로 "Hard Negative" 패시지를 생성하라.
         
-        A Hard Negative passage should:
-        1. Be on the same topic as the query and share similar keywords.
-        2. But NOT answer the query or contain the specific information requested.
-        3. Be plausible but incorrect or irrelevant to the specific question.
-        4. Be similar in length and style to the Positive Passage.
-        5. Output ONLY the generated passage text, no other commentary.
+        Hard Negative 패시지는 어떤 논문의 초록(abstract)이다.
+        Hard Negative 생성시 주의사항:
+        1. possitive와 비슷하지만 다른 영역의 주제에 대한 내용이다.
+        2. (중요) negative는 query에 답할 수 없는, query와 관련이 없는 논문의 초록이어야 한다.
+        3. 길이는 possitive와 비슷하게 유지한다.
+        4. 생성된 패시지 텍스트만 출력하고, 다른 설명이나 부가적인 말은 포함하지 마라.
 
-        Query: {query}
-        Positive Passage: {positive}
+        query: {query}
+        possitive: {positive}
 
-        Hard Negative Passage:
+        negative:
         """
         response = response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-2.5-flash-lite',
                 contents=prompt
             )
         return response.text.strip()
@@ -160,8 +159,6 @@ def process_line_batch(lines):
             positive_abstract = pair['positive']
             
             # Gemini를 이용해 Hard Negative 생성
-            # API 호출이므로 너무 빠른 속도로 요청하면 Rate Limit에 걸릴 수 있음
-            time.sleep(0.5)  # 간단한 속도 제한
             negative_abstract = generate_hard_negative(query, positive_abstract)
             
             if negative_abstract:
@@ -203,10 +200,9 @@ def main():
     
     print("Gemini를 이용한 Hard Negative 생성 시작...")
     
-    # API 호출이 주된 작업이므로 프로세스 수를 너무 많이 늘리면 Rate Limit에 걸릴 수 있음
-    # 적절한 수로 조절 필요 (예: 4~8)
-    num_workers = 4
-    print(f"사용할 프로세스 수: {num_workers}")
+    # 사용자 요청: 코어 2개 환경, IO 작업 위주이므로 멀티스레딩 사용
+    num_workers = 40
+    print(f"사용할 스레드 수: {num_workers}")
 
     with open(INTERMEDIATE_PAIRS_FILE, 'r', encoding='utf-8') as in_f, \
          open(FINAL_OUTPUT_FILE, 'a', encoding='utf-8') as out_f:
@@ -218,16 +214,14 @@ def main():
                 next(in_f, None)
 
         # API 호출은 느리므로 배치를 작게 잡거나, 적절히 조절
-        batch_size = 5
+        batch_size = 5 
         batches = batch_generator(in_f, batch_size)
         
-        with multiprocessing.Pool(processes=num_workers) as pool:
-            for batch_results in tqdm(pool.imap(process_line_batch, batches), desc="Generating Data"):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            for batch_results in tqdm(executor.map(process_line_batch, batches), desc="Generating Data"):
                 for res_line in batch_results:
                     out_f.write(res_line + '\n')
-                    out_f.flush() # 실시간 저장
-
-    print(f"모든 작업 완료. 결과 파일: {FINAL_OUTPUT_FILE}")
+                    out_f.flush() # 실시간 저장    print(f"모든 작업 완료. 결과 파일: {FINAL_OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
