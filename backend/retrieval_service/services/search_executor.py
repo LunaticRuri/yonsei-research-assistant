@@ -38,7 +38,7 @@ class SearchExecutor:
                 documents=[],
                 crag_analysis=[],
                 metadata={'error': 'No documents found'},
-                needs_web_search=True
+                needs_requestioning=True
             )
         
         # Step 2: Rerank + Fusion
@@ -52,21 +52,28 @@ class SearchExecutor:
             user_query=request.user_query
         )
         
-        # Step 3: CRAG 평가
-        # TODO: Refiner 구현 완료 후 주석 해제
-        # [ ]: refiner.py의 CRAG 관련 메소드들 구현 필요
-        self.logger.info("Evaluating document quality with CRAG")
+        # Step 3: Modified-CRAG 평가
+        # 일반적인 CRAG(Corrective RAG)의 Knowledge Refinement 단계, 특히 decompose는 사실 관계를 검증하는 QA 시스템에 최적화되어 있다.
+        # 현 시스템은 자료 추천 및 소개 성격이 강하므로, 메타 데이터(초록, 소개)가 사용자의 연구 의도나 관심사와 얼마나 '의미적으로 부합하는지'를 판단하는 것이 중요하다.
+        # user_query를 '주제', '의도', '제약' 관점으로 분해하고 각 문서가 이러한 요소들과 얼마나 잘 맞는지를 평가하는 방식으로 CRAG를 수정하였다.
+        # [ ]: 제대로 작동하는지 테스트 필요!
+        self.logger.info("Evaluating document quality with Modified-CRAG")
+        
+        self.logger.info("  - Analyzing user query for decomposition")
+        analyzed_query = await self.refiner.analyze_user_query(
+            user_query=request.user_query
+        )
+        
         crag_results = await self.refiner.evaluate_relevance(
             documents=ranked_documents,
-            user_query=request.user_query
+            analyzed_user_query=analyzed_query
         )
         
         # Step 4: 품질 필터링
         filtered_documents = self.refiner.filter_by_quality(crag_results)
         
-        # Step 5: 웹 검색 필요 여부 판단
-        # TODO: 이 부분에서 웹 검색보다 키워드 재설정 및 범위 증가 등으로 대응할 수 있음
-        needs_web = self.refiner.needs_web_search(crag_results)
+        # Step 5: 질문 또는 검색 전략 재검토 필요 여부 판단
+        needs_requestioning = self.refiner.needs_requestioning(crag_results)
         
         # 메타데이터 수집
         elapsed_time = time.time() - start_time
@@ -87,5 +94,5 @@ class SearchExecutor:
             documents=filtered_documents,
             crag_analysis=crag_results,
             metadata=metadata,
-            needs_web_search=needs_web
+            needs_requestioning=needs_requestioning
         )

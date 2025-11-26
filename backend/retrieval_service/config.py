@@ -40,9 +40,9 @@ class Settings(BaseSettings):
     
     # CRAG 설정
     # TODO: 구현되면 나중에 수정해야 함.
-    CRAG_LLM_MODEL: str = "gemini-1.5-flash"
-    CRAG_RELEVANCE_THRESHOLD: float = 0.6
-    CRAG_INCORRECT_RATIO_THRESHOLD: float = 0.7  # 이 비율 넘으면 웹 검색 필요
+    CRAG_LLM_MODEL: str = "gemini-2.5-flash-lite"
+    CRAG_RELEVANCE_THRESHOLD: float = 0.5  # AMBIGUOUS 문서 포함 임계값
+    CRAG_INCORRECT_RATIO_THRESHOLD: float = 0.5  # 이 비율 넘으면 웹 검색 필요
     
     # API 키
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")

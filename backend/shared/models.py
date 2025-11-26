@@ -251,12 +251,24 @@ class RankedDocument(BaseModel):
     rank: int = Field(description="최종 순위 (1부터 시작)")
 
 # ===== CRAG 평가 결과 =====
+class AnalysisUserQuery(BaseModel):
+    """CRAG 평가용으로 분해된 사용자 질문 요소들"""
+    
+    topic: str = Field(description="주제")
+    intent: str = Field(description="의도")
+    constraints: Optional[str] = Field(default=None, description="제약 조건 (있는 경우)")
+
 class RelevanceLevel(str, Enum):
     """CRAG 관련성 등급"""
 
     CORRECT = "correct"      # 바로 사용 가능
     AMBIGUOUS = "ambiguous"  # 보강 필요
     INCORRECT = "incorrect"  # 폐기
+
+class GeneratedCRAGResponse(BaseModel):
+    relevance: RelevanceLevel = Field(description="문서 관련성 등급")
+    confidence: float = Field(ge=0.0, le=1.0, description="판단 신뢰도")
+    reason: Optional[str] = Field(default=None, description="판단 근거")
 
 class CRAGResult(BaseModel):
     """CRAG 품질 평가 결과"""
@@ -282,7 +294,7 @@ class RetrievalResult(BaseModel):
         default_factory=dict,
         description="검색 통계 (처리 시간, 소스별 문서 수 등)"
     )
-    needs_web_search: bool = Field(
+    needs_requestioning: bool = Field(
         default=False,
         description="CRAG에서 incorrect 비율이 높아 웹 검색 필요 여부"
     )

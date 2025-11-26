@@ -124,7 +124,7 @@ training_args = TrainingArguments(
     metric_for_best_model="eval_loss",
     greater_is_better=False,
     
-    evaluation_strategy="steps",
+    eval_strategy="steps",
     eval_steps=SAVE_STEPS,           # 저장할 때 평가도 같이 수행
     fp16=True,                       # GPU 메모리 절약 및 속도 향상
     dataloader_num_workers=4,        # 데이터 로딩 속도 향상
