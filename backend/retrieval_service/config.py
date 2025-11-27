@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # .env 파일 로드
+load_dotenv(verbose=True)  # .env 파일 로드
 
 class Settings(BaseSettings):
     """Retrieval Service 설정"""

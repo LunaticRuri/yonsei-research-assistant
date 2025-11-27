@@ -231,3 +231,4 @@ playground.py
 .VSCodeCounter/
 *.jsonl
 rerank_models/
+faiss_index_map/

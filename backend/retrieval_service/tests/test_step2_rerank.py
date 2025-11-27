@@ -40,15 +40,21 @@ async def test_rerank_basic():
     # 1. 검색 요청 (Step 1)
     search_request = SearchRequest(
         queries=SearchQueries(
-            query_1="artificial intelligence",
-            search_field_1=ElectronicSearchField.TITLE
+            query_1="도덕 의사결정",
+            search_field_1=ElectronicSearchField.TOTAL,
+            operator_1=QueryOperator.AND,
+            query_2="윤리학",
+            search_field_2=ElectronicSearchField.TOTAL,
+            operator_2=QueryOperator.AND,
+            query_3="철학",
+            search_field_3=ElectronicSearchField.TOTAL
         ),
         routes=[RetrievalRoute.YONSEI_ELECTRONICS],
         filters={
-            "year_range": (2023, 2024)
+            "year_range": (2000, 2024)
         },
-        top_k=5,
-        user_query="최신 인공지능 연구 동향"
+        top_k=20,
+        user_query="철학에서 도덕적 의사결정의 근거와 원칙은 무엇인가?"
     )
     
     retriever = RetrieverService()
@@ -98,18 +104,21 @@ async def test_rerank_fusion_multi_source():
     # 1. 검색 요청 (Step 1)
     search_request = SearchRequest(
         queries=SearchQueries(
-            query_1="deep learning",
-            search_field_1=ElectronicSearchField.TITLE
+            query_1="재정 정책",
+            search_field_1=ElectronicSearchField.TOTAL,
+            operator_1=QueryOperator.AND,
+            query_2="경제 성장",
+            search_field_2=ElectronicSearchField.TOTAL
         ),
         routes=[
             RetrievalRoute.YONSEI_ELECTRONICS,
             RetrievalRoute.VECTOR_DB
         ],
         filters={
-            "year_range": (2020, 2024)
+            "year_range": (2000, 2024)
         },
-        top_k=5,
-        user_query="딥러닝의 기초와 응용"
+        top_k=10,
+        user_query="재정 정책이 경제 성장에 미치는 영향은 무엇인가?"
     )
     
     retriever = RetrieverService()

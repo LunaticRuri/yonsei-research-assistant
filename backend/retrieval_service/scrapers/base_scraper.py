@@ -6,7 +6,6 @@ from playwright.async_api import async_playwright
 
 logger = logging.getLogger(__name__)
 
-
 class BaseLibraryScraper:
     """모든 도서관 스크래퍼의 상위 클래스"""
     
@@ -31,7 +30,8 @@ class BaseLibraryScraper:
     async def _get_session(self) -> aiohttp.ClientSession:
         """aiohttp 세션 가져오기 또는 생성"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(headers=self.headers)
+            connector = aiohttp.TCPConnector(ssl=False)
+            self.session = aiohttp.ClientSession(headers=self.headers, connector=connector)
         return self.session
 
     async def close(self):
@@ -47,8 +47,8 @@ class BaseLibraryScraper:
         logger.info(f"Starting login process for user: {user_id}")
         
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True) 
-            context = await browser.new_context()
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(ignore_https_errors=True)
             page = await context.new_page()
 
             try:
