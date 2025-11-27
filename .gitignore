@@ -230,3 +230,4 @@ ssl/
 playground.py
 .VSCodeCounter/
 *.jsonl
+rerank_models/

@@ -63,9 +63,8 @@ with sqlite3.connect(EMBEDDINGS_DATABASE_PATH) as conn:
         print(f"실제 벡터 차원({actual_dimension})으로 VECTOR_DIMENSION을 업데이트합니다.")
         VECTOR_DIMENSION = actual_dimension
 
-# FAISS 인덱스 생성
-index = faiss.IndexFlatL2(VECTOR_DIMENSION)
-index_with_ids = faiss.IndexIDMap(index)
+# FAISS 인덱스 생성 변수 (루프 진입 후 첫 배치에서 초기화)
+index_with_ids = None
 
 # (ISBN, chunk_index) 매핑을 위한 리스트
 all_identifiers = []
@@ -104,6 +103,17 @@ for batch_num in range(0, total_count, BATCH_SIZE):
     # 배치 매트릭스 생성
     batch_embeddings_matrix = np.vstack(batch_embedding_vectors)
     
+    # 인덱스 초기화 및 학습 (첫 번째 배치에서 수행)
+    if index_with_ids is None:
+        print("메모리 최적화를 위해 ScalarQuantizer(QT_8bit) 인덱스를 생성하고 학습합니다...")
+        # QT_8bit: float32(4byte) -> 1byte로 압축하여 메모리 1/4 절약
+        quantizer = faiss.IndexScalarQuantizer(VECTOR_DIMENSION, faiss.ScalarQuantizer.QT_8bit)
+        
+        # Quantizer는 데이터 분포 학습이 필요함
+        quantizer.train(batch_embeddings_matrix)
+        
+        index_with_ids = faiss.IndexIDMap(quantizer)
+
     # FAISS 인덱스에 추가
     batch_faiss_ids = np.arange(current_id, current_id + len(batch_identifiers))
     index_with_ids.add_with_ids(batch_embeddings_matrix, batch_faiss_ids)

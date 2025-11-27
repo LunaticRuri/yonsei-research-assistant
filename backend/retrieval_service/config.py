@@ -28,13 +28,13 @@ class Settings(BaseSettings):
     VECTOR_DIMENSION: int = 1024
     
     # 학술정보원 설정
-    # TODO: config.py로 설정할 필요 있음
     LIBRARY_BASE_URL: str = "https://library.yonsei.ac.kr"
     LIBRARY_TIMEOUT: int = 10
     
     # Reranking 설정
     # TODO: 구현되면 나중에 수정해야 함.
-    RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
+    # RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
+    RERANK_MODEL: str = os.getenv("RERANK_MODEL_PATH")
     RERANK_TOP_K: int = 20  # 최종 반환 문서 수
     FUSION_METHOD: str = "rrf"  # 'rrf' | 'weighted' | 'cross_encoder'
     

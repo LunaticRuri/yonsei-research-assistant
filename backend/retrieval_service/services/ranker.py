@@ -12,8 +12,7 @@ class RankerService:
     
     def __init__(self):
         # Cross-encoder 모델 로드 (semantic reranking용)
-        # TODO: 주석 해제!
-        # self.reranker = CrossEncoder(settings.RERANK_MODEL)
+        self.reranker = CrossEncoder(settings.RERANK_MODEL)
         self.logger = logging.getLogger(__name__)
     
     def tmp_rerank_and_fuse(
@@ -83,7 +82,8 @@ class RankerService:
         else:  # cross_encoder
             final_docs = reranked
         
-        # 4. Top-K 필터링 및 순위 부여
+        # 4. Top-K 필터링 및 순위 부여 
+        # TODO: top_k 설정 재검토 필요
         final_docs = final_docs[:settings.RERANK_TOP_K]
         for rank, doc in enumerate(final_docs, start=1):
             doc.rank = rank
@@ -97,8 +97,8 @@ class RankerService:
         unique = []
         
         for doc in documents:
-            # 간단한 해싱 (실제로는 embedding 유사도 비교 권장)
-            content_hash = hash(doc.content[:500])
+            # NOTE: embedding 유사도 비교로 고도화 가능
+            content_hash = hash(doc.content[:100])
             
             if content_hash not in seen:
                 seen.add(content_hash)
@@ -154,12 +154,12 @@ class RankerService:
         rrf_scores = defaultdict(float)
         for source, docs in source_groups.items():
             for rank, doc in enumerate(docs, start=1):
-                doc_id = hash(doc.content[:200])  # 임시 ID
+                doc_id = hash(doc.content[:100])  # 임시 ID
                 rrf_scores[doc_id] += 1.0 / (k + rank)
         
         # RRF 점수 적용
         for doc in documents:
-            doc_id = hash(doc.content[:200])
+            doc_id = hash(doc.content[:100])
             doc.rerank_score = rrf_scores[doc_id]
         
         # 재정렬

@@ -67,7 +67,7 @@ with open(DATA_PATH, 'r', encoding='utf-8') as f:
         })
 
 df = pd.DataFrame(data_entries)
-train_df, val_df = train_test_split(df, test_size=0.05, random_state=42)
+train_df, val_df = train_test_split(df, test_size=0.05, random_state=2000)
 
 # PyTorch Dataset 클래스 정의
 class RerankDataset(Dataset):
