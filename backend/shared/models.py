@@ -6,19 +6,16 @@ from datetime import datetime
 # ===== 기본 모델들 =====
 
 class ServiceStatus(BaseModel):
-    """서비스 상태"""
     name: str
     status: str
     last_check: Optional[datetime] = None
 
 class SystemStatus(BaseModel):
-    """전체 시스템 상태"""
     overall_status: str
     services: List[ServiceStatus]
     active_sessions: int
 
 # ===== 대화 기록 =====
-# Pydantic 모델 정의 (TypeScript의 인터페이스 역할)
 class Conversation(BaseModel):
     id: str  # 각 대화의 고유 ID (라우팅에 사용)
     title: str
@@ -27,22 +24,16 @@ class Conversation(BaseModel):
 # ================== dialogue-service 부분 ==================
 
 class DialogueRequest(BaseModel):
-    """소크라테스식 대화 요청"""
     session_id: str
     message: str
     conversation_history: Optional[List[str]] = []
 
 # ================== strategy-service 부분 ==================
 
-# ===== 라우팅 =====
-# [수정됨] 창현님의 검색어 추출(Query Translation) 연구를 위해 필드 추가
 class RoutingDecision(BaseModel):
-    """라우팅 및 검색 전략 결정 모델"""
-
     route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
     reason: str = Field(..., description="라우팅 결정 이유")
     
-    # [!] 아래 필드가 추가되었습니다.
     search_queries: List[str] = Field(
         default=[],
         description="검색 엔진에 입력할 최적화된 키워드 리스트 (예: ['굴패각 활용', '석회석 소성'])"
@@ -50,48 +41,41 @@ class RoutingDecision(BaseModel):
 
 # ================== retrieval-service 부분 ==================
 
-# ===== Strategy → Retrieval 요청 =====
 class QueryOperator(str, Enum):
-    """검색 연산자"""
-    AND = "and" # 필수
-    OR = "or"   # 선택
-    NOT = "not" # 제외
+    AND = "and" 
+    OR = "or"   
+    NOT = "not" 
 
 class RetrievalRoute(str, Enum):
-    """검색 소스"""
-    VECTOR_DB = "vector_book_db" # 국립중앙도서관 도서 벡터 DB
-    YONSEI_HOLDINGS = "yonsei_holdings" # 연세대 도서관 소장 자료
-    YONSEI_ELECTRONICS = "yonsei_electronics" # 연세대 도서관 전자자료
+    VECTOR_DB = "vector_book_db" 
+    YONSEI_HOLDINGS = "yonsei_holdings" 
+    YONSEI_ELECTRONICS = "yonsei_electronics" 
 
 
 class LibrarySearchField(str, Enum):
-    """검색 필드 타입 (도서관 소장자료 전용)"""
-    TOTAL = "TOTAL"  # 전체
-    TITLE = "1"  # 서명(책제목)
-    AUTHOR = "2"  # 저자
-    PUBLISHER = "3"  # 출판사
-    SUBJECT = "4"  # 주제어
+    TOTAL = "TOTAL"  
+    TITLE = "1"  
+    AUTHOR = "2"  
+    PUBLISHER = "3"  
+    SUBJECT = "4"  
 
 class HoldingsMaterialType(str, Enum):
-    """자료 유형 (도서관 소장자료만)"""
-    TOTAL = "TOTAL"  # 전체
-    BOOK = "m"  # 단행본
-    SERIAL = "s"  # 연속간행물
-    MULTIMEDIA = "b;p;v;x;u;c"  # 멀티미디어/비도서
-    THESIS = "t"  # 학위논문
-    OLD_BOOK = "o"  # 고서
-    ARTICLE = "zart"  # 기사
+    TOTAL = "TOTAL"  
+    BOOK = "m"  
+    SERIAL = "s"  
+    MULTIMEDIA = "b;p;v;x;u;c"  
+    THESIS = "t"  
+    OLD_BOOK = "o"  
+    ARTICLE = "zart"  
 
 class ElectronicSearchField(str, Enum):
-    """검색 필드 타입 (전자자료 전용)"""
-    TOTAL = ""      # 전체
-    KEYWORD = "TX"  # 키워드
-    TITLE = "TI"     # 제목
-    AUTHOR = "AU"    # 저자
-    SUBJECT = "SU"  # 주제어
+    TOTAL = ""       
+    KEYWORD = "TX"  
+    TITLE = "TI"     
+    AUTHOR = "AU"    
+    SUBJECT = "SU"  
 
 class SearchQueries(BaseModel):
-    """멀티 쿼리 모델 (최대 3개 쿼리 지원)"""
     query_1: str
     search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
     operator_1: Optional[QueryOperator] = None
@@ -103,26 +87,19 @@ class SearchQueries(BaseModel):
     
     @model_validator(mode='after')
     def validate_query_sequence(self):
-        """쿼리는 순차적으로만 입력 가능: (query_1), (query_1, query_2), (query_1, query_2, query_3)"""
-
         has_query_2 = bool(self.query_2)
         has_query_3 = bool(self.query_3)
         
-        # query_1은 필수이므로 이미 검증됨 (str 타입)
-        
-        # query_2가 없는데 query_3이 있는 경우 에러
         if not has_query_2 and has_query_3:
             raise ValueError(
                 "Invalid query sequence: query_3 cannot exist without query_2. "
                 "Valid combinations: (query_1), (query_1, query_2), (query_1, query_2, query_3)"
             )
         
-        # query_2가 있으면 search_field_2가 필수
         if has_query_2:
             if self.search_field_2 is None:
                 raise ValueError("search_field_2 is required when query_2 is provided")
             
-        # query_3이 있으면 operator_2와 search_field_3도 필수
         if has_query_3:
             if self.operator_2 is None:
                 raise ValueError("operator_2 is required when query_3 is provided")
@@ -133,11 +110,6 @@ class SearchQueries(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    """
-    Strategy Service가 Retrieval Service에 전달하는 구조화된 검색 명세
-    """
-    
-    # 일단 상정한 방법은 아래와 같음 
     queries: SearchQueries = Field(..., description="Multi-query/Step-back/HyDE 등으로 변환된 쿼리들 (최대 3개)")
     routes: List[RetrievalRoute] = Field(
         ...,
@@ -147,23 +119,19 @@ class SearchRequest(BaseModel):
             [RetrievalRoute.YONSEI_ELECTRONICS]
         ],
     )
-    # 검색 필터 (선택 사항)
     filters: Optional[Dict[str, Any]] = Field(
         default=None,
         description="각 소스별 필터 조건 (연도 범위, 자료 유형 등)",
         examples=[
-            # Holdings 용 예시 material_types는 List[HoldingsMaterialType | str]
             {"year_range": (2020, 2023), "material_types": [HoldingsMaterialType.BOOK, HoldingsMaterialType.THESIS]},
-            {"year_range": (2023, 2025), "academic_journals_only": False, "foreign_language": False} # Electronic 용 예시
+            {"year_range": (2023, 2025), "academic_journals_only": False, "foreign_language": False} 
         ]
     )
-    # NOTE: 이 top-k가 각 어댑터 각각의 top-k가 되도록 설정되어있는데, 별도로 설정하기는 애매해서 일단 이렇게 둠
     top_k: int = Field(default=10, description="각 소스별 반환 문서 수")
     user_query: str = Field(description="원본 사용자 질문 (CRAG 평가용)")
 
 # ===== 검색된 문서 공통 모델 =====
 class Document(BaseModel):
-    """검색된 문서"""
     content: str = Field(description="문서 본문 텍스트")
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
@@ -175,8 +143,6 @@ class Document(BaseModel):
 # ===== 도서관 소장 정보 =====
 
 class LibraryHoldingInfo(BaseModel):
-    """도서관 소장 자료 상세 정보"""
-
     access_id: str = Field(..., description="자료 접근 ID (CATTOT...)")  
     title: str = Field(default="", description="자료 제목")
     author: str = Field(default="", description="저자(여러명도 한 문자열로 포함 가능)")
@@ -207,8 +173,6 @@ class LibraryHoldingInfo(BaseModel):
 
 # ===== 도서관 전자자료 정보 =====
 class ElectronicResourceInfo(BaseModel):
-    """전자자료(학술논문, E-Book, 저널 등) 상세 정보"""
-
     access_id: str = Field(default="", description="자료 접근 ID (있는 경우)")
     title: str = Field(default="", description="자료 제목 (논문명, E-Book 제목 등)")
     author: List[str] = Field(default_factory=list, description="저자 또는 작성자")
@@ -241,8 +205,6 @@ class ElectronicResourceInfo(BaseModel):
 
 # ===== Reranking 결과 =====
 class RankedDocument(BaseModel):
-    """Rerank 후 최종 문서"""
-
     content: str
     metadata: Dict[str, Any]
     rerank_score: float = Field(description="Cross-encoder 재점수")
@@ -252,18 +214,14 @@ class RankedDocument(BaseModel):
 
 # ===== CRAG 평가 결과 =====
 class AnalysisUserQuery(BaseModel):
-    """CRAG 평가용으로 분해된 사용자 질문 요소들"""
-    
     topic: str = Field(description="주제")
     intent: str = Field(description="의도")
     constraints: Optional[str] = Field(default=None, description="제약 조건 (있는 경우)")
 
 class RelevanceLevel(str, Enum):
-    """CRAG 관련성 등급"""
-
-    CORRECT = "correct"      # 바로 사용 가능
-    AMBIGUOUS = "ambiguous"  # 보강 필요
-    INCORRECT = "incorrect"  # 폐기
+    CORRECT = "correct"      
+    AMBIGUOUS = "ambiguous"  
+    INCORRECT = "incorrect"  
 
 class GeneratedCRAGResponse(BaseModel):
     relevance: RelevanceLevel = Field(description="문서 관련성 등급")
@@ -271,8 +229,6 @@ class GeneratedCRAGResponse(BaseModel):
     reason: Optional[str] = Field(default=None, description="판단 근거")
 
 class CRAGResult(BaseModel):
-    """CRAG 품질 평가 결과"""
-
     document: RankedDocument
     relevance: RelevanceLevel
     confidence: float = Field(ge=0.0, le=1.0, description="판단 신뢰도")
@@ -280,10 +236,7 @@ class CRAGResult(BaseModel):
 
 # ================== generation-service 부분 ==================
 
-# ===== Retrieval → Generation 응답 =====
 class RetrievalResult(BaseModel):
-    """Retrieval Service의 최종 응답"""
-    
     documents: List[RankedDocument] = Field(
         description="CRAG 필터링 + Rerank 완료 문서"
     )
@@ -297,4 +250,21 @@ class RetrievalResult(BaseModel):
     needs_requestioning: bool = Field(
         default=False,
         description="CRAG에서 incorrect 비율이 높아 질문 수정 또는 재검색 필요 여부"
+    )
+
+# ================== [New] 추가: 간편 연동용 모델 ==================
+
+class SimpleSearchRequest(BaseModel):
+    """
+    Strategy -> Retrieval 간편 연동을 위한 단순 요청 모델
+    (복잡한 필드 지정 없이 키워드 리스트만으로 검색 요청)
+    """
+    query: str              # 사용자의 원래 질문 (참고용)
+    keywords: List[str]     # 추출된 키워드 리스트 (예: ["디지털 리터러시", "노인"])
+    top_k: int = 5          # 반환할 문서 개수
+    
+    # 선택 사항: 검색 소스 지정 (기본값: 벡터DB, 도서관 소장자료)
+    routes: List[RetrievalRoute] = Field(
+        default=[RetrievalRoute.VECTOR_DB, RetrievalRoute.YONSEI_HOLDINGS],
+        description="검색할 대상 소스"
     )
