@@ -7,7 +7,7 @@ import time
 from tqdm import tqdm
 
 # ======================================================
-# ⚙️ 실험 설정 (여기를 수정해서 다양한 대결을 붙여보세요!)
+# ⚙️ 실험 설정
 # ======================================================
 SERVER_URL = "http://localhost:8000/api/v1/strategy/keywords"
 BENCHMARK_FILE = "benchmark_set_20.json"
