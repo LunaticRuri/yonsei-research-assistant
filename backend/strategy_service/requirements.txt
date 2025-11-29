@@ -11,3 +11,4 @@ peft
 torch
 accelerate
 python-dotenv
+httpx
