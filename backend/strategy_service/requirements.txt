@@ -6,3 +6,8 @@ redis
 pydantic-settings
 openai
 pydantic-settings
+transformers
+peft
+torch
+accelerate
+python-dotenv
