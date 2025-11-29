@@ -106,13 +106,24 @@ df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
 
 print("\\n" + "="*50)
 print(f"✅ 테스트 완료! 결과 파일: {OUTPUT_FILE}")
-print("📊 [모델별 평균 속도]")
+print("📊 [모델별 성능 요약]")
 
 for model_name in MODELS_TO_TEST:
-    col_name = f"{model_name}_Latency(ms)"
-    if col_name in df.columns:
-        # 에러(0ms) 제외하고 평균 계산
-        avg_time = df[df[col_name] > 0][col_name].mean()
-        print(f"   - {model_name}: {avg_time:.2f} ms")
+    lat_col = f"{model_name}_Latency(ms)"
+    doc_col = f"{model_name}_Docs"
+    
+    if lat_col in df.columns and doc_col in df.columns:
+        # 1. 평균 속도 (에러 제외)
+        avg_time = df[df[lat_col] > 0][lat_col].mean()
+        
+        # 2. 검색 실패율 (문서 개수가 0인 비율)
+        total_runs = len(df)
+        failed_runs = len(df[df[doc_col] == 0])
+        fail_rate = (failed_runs / total_runs) * 100
+        
+        print(f"📌 [{model_name}]")
+        print(f"   - 평균 속도: {avg_time:.2f} ms")
+        print(f"   - 검색 실패율: {fail_rate:.1f}% ({failed_runs}/{total_runs}건)")
+        print("-" * 30)
 
 print("="*50)
