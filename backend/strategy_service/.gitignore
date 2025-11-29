@@ -6,3 +6,10 @@ backend/.env
 # 서버 실행 로그 파일 무시
 server.log
 backend/strategy-service/server.log
+
+__pycache__/
+*.pyc
+.env
+models/*
+!models/.gitkeep
+results/
