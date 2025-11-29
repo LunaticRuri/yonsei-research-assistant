@@ -96,6 +96,9 @@ for idx, item in enumerate(tqdm(questions)):
         row[f"{model_name}_Keywords"] = k
         row[f"{model_name}_Latency"] = t
         row[f"{model_name}_Docs"] = d
+
+        # [New] 글자 수 추가 (비용 계산용 근거 데이터)
+        row[f"{model_name}_Len"] = len(str(k))
         
         if t > 0 and t < fastest_time:
             fastest_time = t
