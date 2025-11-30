@@ -13,8 +13,7 @@ BENCHMARK_FILE = "benchmark_set_20.json"
 OUTPUT_FILE = "ab_test_final_report.csv"
 
 # 테스트할 모델 리스트
-MODELS_TO_TEST = ["openai", "lora"] 
-# (나중에 ["openai", "gemini", "upstage", "lora"] 로 확장 가능)
+MODELS_TO_TEST = ["openai", "gemini", "upstage", "cohere", "lora"]
 
 # ======================================================
 # 📥 데이터 준비
