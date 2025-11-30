@@ -6,7 +6,9 @@ from peft import PeftModel
 
 # 부품들 가져오기
 from .providers.openai_handler import OpenAIHandler
-# 나중에 from .providers.gemini_handler import GeminiHandler 추가 가능
+from .providers.gemini_handler import GeminiHandler
+from .providers.cohere_handler import CohereHandler
+from .providers.upstage_handler import UpstageHandler
 
 class QueryTranslationService:
     def __init__(self, adapter_path: str = None):
@@ -15,8 +17,9 @@ class QueryTranslationService:
         # 1. API 핸들러 등록 (확장성 포인트!)
         self.api_providers = {
             "openai": OpenAIHandler(os.getenv("OPENAI_API_KEY")),
-            # "gemini": GeminiHandler(os.getenv("GEMINI_API_KEY")),  <-- 나중에 주석 해제만 하면 됨
-            # "upstage": UpstageHandler(...)
+            "gemini": GeminiHandler(os.getenv("GEMINI_API_KEY")), 
+            "upstage": UpstageHandler(os.getenv("UPSTAGE_API_KEY")),
+            "cohere": CohereHandler(os.getenv("COHERE_API_KEY"))
         }
 
         # 2. LoRA 모델 로드 (기존 로직 유지)
