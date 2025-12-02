@@ -7,7 +7,7 @@ from .base import BaseAPIHandler
 class GeminiHandler(BaseAPIHandler):
     def __init__(self, api_key):
         if api_key:
-            self.model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", api_key=api_key)
+            self.model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", api_key=api_key)
         else:
             self.model = None
 
@@ -26,4 +26,5 @@ class GeminiHandler(BaseAPIHandler):
             response = chain.invoke({"query": query})
             return str(response.content)
         except Exception as e:
+
             return f"[Error] Gemini Call Failed: {e}"
