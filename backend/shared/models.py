@@ -252,6 +252,21 @@ class RetrievalResult(BaseModel):
         description="CRAG에서 incorrect 비율이 높아 질문 수정 또는 재검색 필요 여부"
     )
 
+class GenerationRequest(BaseModel):
+    query: str = Field(description="Original user query")
+    retrieval_result: RetrievalResult = Field(description="Result from Retrieval Service")
+
+class GenerationResult(BaseModel):
+    """Final response from Generation Service"""
+    answer: str = Field(description="Synthesized answer")
+    citations: List[int] = Field(default=[], description="List of document indices cited")
+    is_supported_score: int = Field(description="Self-evaluation: Support score (1-5)")
+    is_useful_score: int = Field(description="Self-evaluation: Utility score (1-5)")
+    reasoning: Optional[str] = Field(default=None, description="Reasoning for self-evaluation")
+    
+    # Metadata from retrieval for frontend display
+    retrieval_metadata: Optional[dict] = Field(default=None)
+
 # ================== [New] 추가: 간편 연동용 모델 ==================
 
 class SimpleSearchRequest(BaseModel):

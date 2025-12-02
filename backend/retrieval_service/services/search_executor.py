@@ -42,7 +42,6 @@ class SearchExecutor:
             )
         
         # Step 2: Rerank + Fusion
-        # TODO: Rerank 모델 파인 튜닝 후 원래 메소드로 교체
         self.logger.info(f"Reranking {len(raw_documents)} documents")
         ranked_documents = self.ranker.rerank_and_fuse(
             documents=raw_documents,

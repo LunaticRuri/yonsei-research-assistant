@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from generation_service.models import GenerationRequest, GenerationResult
+from shared.models import GenerationRequest, GenerationResult
 from generation_service.services.generator import GeneratorService
 import logging
 

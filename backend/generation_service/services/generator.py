@@ -1,7 +1,6 @@
-from shared.models import RetrievalResult, RankedDocument
+from shared.models import RetrievalResult, RankedDocument, GenerationResult
 from generation_service.services.llm_client import LLMClient
 from generation_service.prompts import SELF_RAG_SYSTEM_PROMPT, SELF_RAG_USER_PROMPT_TEMPLATE
-from generation_service.models import GenerationResult
 import logging
 
 logger = logging.getLogger(__name__)

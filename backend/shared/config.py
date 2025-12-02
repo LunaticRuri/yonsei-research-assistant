@@ -11,10 +11,10 @@ class Settings(BaseSettings):
 
     # Gemini 설정
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     
     # 데이터베이스 설정
-    CHROMA_DB_PATH: str = "./data/chroma_db"
+    # CHROMA_DB_PATH: str = "./data/chroma_db"
     
     # 서비스 URL들
     DIALOGUE_SERVICE_URL: str = "http://localhost:8001"

@@ -6,7 +6,6 @@ from tqdm import tqdm
 import numpy as np
 
 # Configuration
-# TODO: 실제 데이터베이스 경로로 변경
 SOURCE_DB_PATH = "./data/book_docs.db" 
 MODEL_NAME = "nlpai-lab/KURE-v1"
 

@@ -16,8 +16,7 @@ class BaseLibraryScraper:
         self.login_url = f"{self.base_url}/login"
         self.logout_url = f"{self.base_url}/SSOLegacy.do?pname=spLogout"
 
-        # TODO: 적절한 값으로 설정 필요. 일단은 안전하게 1초로 설정함.
-        self.request_delay = 1.0
+        self.request_delay = 0.5
         
         self.session: Optional[aiohttp.ClientSession] = None
         self.headers = {

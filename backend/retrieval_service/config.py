@@ -32,14 +32,13 @@ class Settings(BaseSettings):
     LIBRARY_TIMEOUT: int = 10
     
     # Reranking 설정
-    # TODO: 구현되면 나중에 수정해야 함.
+    # NOTE: 비교 시 이 부분 변경 필요
     # RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
     RERANK_MODEL: str = os.getenv("RERANK_MODEL_PATH")
     RERANK_TOP_K: int = 20  # 최종 반환 문서 수
     FUSION_METHOD: str = "rrf"  # 'rrf' | 'weighted' | 'cross_encoder'
     
     # CRAG 설정
-    # TODO: 구현되면 나중에 수정해야 함.
     CRAG_LLM_MODEL: str = "gemini-2.5-flash-lite"
     CRAG_RELEVANCE_THRESHOLD: float = 0.5  # AMBIGUOUS 문서 포함 임계값
     CRAG_INCORRECT_RATIO_THRESHOLD: float = 0.5  # 이 비율 넘으면 웹 검색 필요

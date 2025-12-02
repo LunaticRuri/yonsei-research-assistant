@@ -57,7 +57,7 @@ async def generate_dataset():
             continue
         if name == "[미사용]":
             continue
-        # TODO: 논문 부분 테스트 할 때는 books_prompt 대신 electronics_prompt 사용
+        # NOTE: 논문 부분 테스트 할 때는 books_prompt 대신 electronics_prompt 사용
         electronics_prompt = f"""
         KDC (Korean Decimal Classification) 주제 '{code} {name}'에 해당하는 분야에 대한 궁금증이 드러나는 학문적 질문 하나와 그 질문에서 추출할 수 있는 검색 키워드들을 생성해.
         
@@ -165,11 +165,6 @@ async def generate_dataset():
                     top_k=10,
                     user_query=generated_q.question
                 )
-                
-                # We might want to store the original question too, but SearchRequest doesn't have it.
-                # For the purpose of the dataset file, maybe we can wrap it or just dump the SearchRequest.
-                # The user said "SearchRequest 모델 규격에 맞추어 생성하면 된다".
-                # So we will append the SearchRequest dict.
                 
                 print(f"Generated for {code} {name}: Question: {generated_q.question}, Keywords: {keywords}")
 
