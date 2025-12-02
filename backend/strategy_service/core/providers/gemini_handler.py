@@ -28,3 +28,4 @@ class GeminiHandler(BaseAPIHandler):
         except Exception as e:
 
             return f"[Error] Gemini Call Failed: {e}"
+
