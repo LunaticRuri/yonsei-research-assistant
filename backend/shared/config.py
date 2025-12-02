@@ -11,7 +11,8 @@ class Settings(BaseSettings):
 
     # Gemini 설정
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_FLASH_MODEL: str = "gemini-2.5-flash"
+    GEMINI_PRO_MODEL: str = "gemini-2.5-pro"
     
     # 데이터베이스 설정
     # CHROMA_DB_PATH: str = "./data/chroma_db"

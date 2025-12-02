@@ -10,7 +10,8 @@
 │   └── ...
 │
 └── backend/                  # 마이크로서비스 및 인프라
-    ├── api_gateway/          # 1. API 게이트웨이 (Port: 8000)
+    ├── cli_interface/        # 1. 작동 및 시연을 위한 프로그램
+    |
     ├── dialogue_service/     # 2. 소크라테스식 대화 (Port: 8001)
     │
     ├── strategy_service/     # 3. RAG 쿼리 처리 (Port: 8002)
@@ -32,18 +33,15 @@
     ├── shared/               # 공통 Pydantic 모델, 설정, 유틸
     │   ├── models.py
     │   └── config.py
-    │
-    ├── docker-compose.yml    # 모든 서비스 + DB 오케스트레이션
+    |
     └── .env                  # 환경변수
 ```
 
 ## 서비스별 기능
 
-### 1. API Gateway (Port: 8000)
+### 1. cli_interface
 
-- 모든 마이크로서비스 요청을 중앙에서 관리
-- CORS 설정 및 인증 처리
-- 서비스 간 요청 라우팅
+- 전체적인 작동 모습과 시연을 위한 클라이언트측 프로토타입
 
 ### 2. Dialogue Service (Port: 8001)
 

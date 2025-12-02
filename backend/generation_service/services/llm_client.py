@@ -1,5 +1,4 @@
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from google import genai
 from typing import Optional, Dict, Any, List
 from shared.config import settings
 import logging
@@ -12,7 +11,7 @@ class LLMClient:
     
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model_name = settings.GEMINI_MODEL or "gemini-1.5-flash"
+        self.model_name = settings.GEMINI_FLASH_MODEL
         
     def _convert_messages_to_gemini(self, messages: List[Dict[str, str]]) -> tuple[str, List[Dict[str, Any]]]:
         """
@@ -58,19 +57,10 @@ class LLMClient:
             
             if response_format and response_format.get("type") == "json_object":
                 generation_config.response_mime_type = "application/json"
-
-            # Safety settings - block few things for research assistant
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            }
             
             response = await model.generate_content_async(
                 contents,
-                generation_config=generation_config,
-                safety_settings=safety_settings
+                generation_config=generation_config
             )
             
             return response.text

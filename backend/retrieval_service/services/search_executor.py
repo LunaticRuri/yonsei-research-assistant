@@ -36,7 +36,6 @@ class SearchExecutor:
             self.logger.warning("No documents retrieved")
             return RetrievalResult(
                 documents=[],
-                crag_analysis=[],
                 metadata={'error': 'No documents found'},
                 needs_requestioning=True
             )
@@ -88,7 +87,6 @@ class SearchExecutor:
         
         return RetrievalResult(
             documents=filtered_documents,
-            crag_analysis=crag_results,
             metadata=metadata,
             needs_requestioning=needs_requestioning
         )

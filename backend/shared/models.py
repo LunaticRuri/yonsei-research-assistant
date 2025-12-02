@@ -240,9 +240,6 @@ class RetrievalResult(BaseModel):
     documents: List[RankedDocument] = Field(
         description="CRAG 필터링 + Rerank 완료 문서"
     )
-    crag_analysis: List[CRAGResult] = Field(
-        description="전체 문서에 대한 CRAG 평가"
-    )
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
         description="검색 통계 (처리 시간, 소스별 문서 수 등)"
