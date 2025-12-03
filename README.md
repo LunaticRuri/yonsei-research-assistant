@@ -6,7 +6,7 @@
 
 ```text
 /yonsei-research-assistant
-├── frontend/                 # SvelteKit 프론트엔드
+├── frontend/                 # SvelteKit 프론트엔드 (구현 X)
 │   └── ...
 │
 └── backend/                  # 마이크로서비스 및 인프라

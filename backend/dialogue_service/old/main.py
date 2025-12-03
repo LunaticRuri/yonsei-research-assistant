@@ -1,3 +1,6 @@
+import sys
+import os
+
 from fastapi import FastAPI
 from shared.models import DialogueRequest, DialogueResponse
 from services.dialogue_engine import DialogueEngine
@@ -9,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Dialogue Service",
-    description="소크라테스식 대화를 통한 검색 및 연구 주제 구체화 서비스",
+    description="소크라테스식 대화를 통한 연구 주제 구체화 서비스",
     version="1.0.0"
 )
 
