@@ -143,8 +143,8 @@ async def generate_keywords_and_search(request: KeywordRequest):
 # Strategy -> Routing 통합 요청
 # Gemini 크레딧이 있어서 CLI는 기본설정을 Gemini로 함
 # TODO: 구현해야 함!
-@app.post("/api/v1/strategy/cli_stratrgy_request")
-async def cli_stratrgy_request(request: QueryToKeywordRequest) -> SearchRequest:
+@app.post("/api/v1/strategy/cli_stratrgy_request", response_model=SearchRequest)
+async def cli_stratrgy_request(request: QueryToKeywordRequest):
     
     if translation_service is None or retrieval_client is None:
         raise HTTPException(status_code=500, detail="서비스가 초기화되지 않았습니다.")
@@ -164,7 +164,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest) -> SearchRequest:
         keyword_list = []
     
     # STEP 2: Determine Routing (현재는 무조건 'search-agent'로 고정)
-    
+    # NOTE: 이미 구현되어 있는 함수보다 그냥 일단 간이로 작성해서 돌리는게 편할 거 같음!
     
 
     

@@ -1,7 +1,7 @@
 import logging
 import time
 
-from shared.models import SearchRequest, RetrievalResult, RankedDocument
+from shared.models import SearchRequest, RetrievalResult
 from retrieval_service.services.retriever import RetrieverService
 from retrieval_service.services.ranker import RankerService
 from retrieval_service.services.refiner import RefinerService

@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 from openai import OpenAI
 import json
 import sys

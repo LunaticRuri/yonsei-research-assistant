@@ -1,3 +1,4 @@
+from kiwipiepy import Kiwi
 from typing import List
 import logging
 
@@ -23,6 +24,17 @@ class LibraryHoldingsAdapter(BaseRetriever):
         # self.scraper = LibraryHoldingsScraper(user_id=settings.YONSEI_ID, user_pw=settings.YONSEI_PW)
         self.scraper = LibraryHoldingsScraper()
         self.logger = logging.getLogger(__name__)
+        
+        # NOTE: num_workers는 1로 해야 비동기 지원됨
+        self.kiwi = Kiwi(num_workers=1)
+    
+    async def _filter_nouns(self, text: str) -> str:
+        """한국어 텍스트에서 명사만 추출하여 반환"""
+        nouns = []
+        for token in self.kiwi.tokenize(text):
+            if 'NN' in token.tag and 'NNB' not in token.tag:
+                nouns.append(token.form)
+        return " ".join(nouns)
     
     async def request_to_search_params(self, request: SearchRequest) -> LibraryHoldingsSearchParams:
         """
@@ -36,13 +48,14 @@ class LibraryHoldingsAdapter(BaseRetriever):
         queries = request.queries
         filters = request.filters
         
-        query = queries.query_1
+        query = await self._filter_nouns(queries.query_1)
         search_field = queries.search_field_1 if isinstance(queries.search_field_1, LibrarySearchField) else LibrarySearchField.TOTAL
         year_range = None
         material_types = []
 
         additional_queries = []
         if queries.query_2:
+            queries.query_2 = await self._filter_nouns(queries.query_2)
             if isinstance(queries.search_field_2, LibrarySearchField):
                 search_field_2 = queries.search_field_2
             else:
@@ -57,6 +70,7 @@ class LibraryHoldingsAdapter(BaseRetriever):
             )
 
         if queries.query_3:
+            queries.query_3 = await self._filter_nouns(queries.query_3)
             if isinstance(queries.search_field_3, LibrarySearchField):
                 search_field_3 = queries.search_field_3
             else:
