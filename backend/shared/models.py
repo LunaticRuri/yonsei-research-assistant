@@ -24,14 +24,27 @@ class DialogueRequest(BaseModel):
 
 # ================== strategy-service 부분 ==================
 
+class RoutingRequestWithQuery(BaseModel):
+    """기존 라우팅 요청용"""
+    query: str
+
+class StrategyServiceMode(str, Enum):
+    OPENAI = "openai"
+    LORA = "lora"
+    GEMINI = "gemini"
+
+class QueryToKeywordRequest(BaseModel):
+    query: str
+    mode: StrategyServiceMode = StrategyServiceMode.GEMINI
+
+class RetrievalRoute(str, Enum):
+    VECTOR_DB = "vector_book_db" 
+    YONSEI_HOLDINGS = "yonsei_holdings" 
+    YONSEI_ELECTRONICS = "yonsei_electronics"
+
 class RoutingDecision(BaseModel):
-    route: str = Field(..., description="라우팅 경로 (e.g., 'rag_service', 'search_agent_service')")
+    route: RetrievalRoute = Field(..., description="라우팅 경로, RetrievalRoute 참고!")
     reason: str = Field(..., description="라우팅 결정 이유")
-    
-    search_queries: List[str] = Field(
-        default=[],
-        description="검색 엔진에 입력할 최적화된 키워드 리스트 (예: ['굴패각 활용', '석회석 소성'])"
-    )
 
 # ================== retrieval-service 부분 ==================
 
@@ -39,12 +52,6 @@ class QueryOperator(str, Enum):
     AND = "and" 
     OR = "or"   
     NOT = "not" 
-
-class RetrievalRoute(str, Enum):
-    VECTOR_DB = "vector_book_db" 
-    YONSEI_HOLDINGS = "yonsei_holdings" 
-    YONSEI_ELECTRONICS = "yonsei_electronics" 
-
 
 class LibrarySearchField(str, Enum):
     TOTAL = "TOTAL"  

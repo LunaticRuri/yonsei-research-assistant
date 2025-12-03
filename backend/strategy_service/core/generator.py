@@ -5,15 +5,28 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 
 # 부품들 가져오기
-from .providers.openai_handler import OpenAIHandler
-from .providers.gemini_handler import GeminiHandler
-from .providers.cohere_handler import CohereHandler
-from .providers.upstage_handler import UpstageHandler
+from strategy_service.core.providers.openai_handler import OpenAIHandler
+from strategy_service.core.providers.gemini_handler import GeminiHandler
+from strategy_service.core.providers.cohere_handler import CohereHandler
+from strategy_service.core.providers.upstage_handler import UpstageHandler
+
+from shared.models import StrategyServiceMode
+from shared.config import settings
+
+
 
 class QueryTranslationService:
     def __init__(self, adapter_path: str = None):
-        print("⚙️ [Init] QueryTranslationService (Factory Mode) 초기화...")
+        print("[Init] QueryTranslationService (Factory Mode) 초기화...")
         
+        # 1. API 핸들러 등록 (확장성 포인트!)
+        self.api_providers = {
+            "openai": OpenAIHandler(settings.OPENAI_API_KEY),
+            "gemini": GeminiHandler(settings.GEMINI_API_KEY)
+        }
+        
+        """
+        원래 코드:
         # 1. API 핸들러 등록 (확장성 포인트!)
         self.api_providers = {
             "openai": OpenAIHandler(os.getenv("OPENAI_API_KEY")),
@@ -21,6 +34,7 @@ class QueryTranslationService:
             "upstage": UpstageHandler(os.getenv("UPSTAGE_API_KEY")),
             "cohere": CohereHandler(os.getenv("COHERE_API_KEY"))
         }
+        """
 
         # 2. LoRA 모델 로드 (기존 로직 유지)
         self.lora_model = None
@@ -45,7 +59,7 @@ class QueryTranslationService:
         else:
             print(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
 
-    def _generate_by_lora(self, query):
+    async def _generate_by_lora(self, query):
         if self.lora_model is None:
             time.sleep(0.5) 
             return f"[Mock] '{query}'에 대한 로컬 키워드 (모델 미연결)"
@@ -56,7 +70,7 @@ class QueryTranslationService:
             outputs = self.lora_model.generate(**inputs, max_new_tokens=128)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-    def generate_keywords(self, query, mode="openai"):
+    async def generate_keywords(self, query, mode: StrategyServiceMode):
         start_time = time.time()
         result = ""
 
@@ -67,7 +81,7 @@ class QueryTranslationService:
         # 2. API 모드 (동적 선택)
         elif mode in self.api_providers:
             handler = self.api_providers[mode]
-            result = handler.generate_keywords(query)
+            result = await handler.generate_keywords(query)
         
         # 3. 지원하지 않는 모드
         else:

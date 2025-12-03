@@ -1,10 +1,8 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
-from .base import BaseAPIHandler
+from google import genai
+from strategy_service.core.providers.base import BaseAPIHandler
 
 class GeminiHandler(BaseAPIHandler):
     def __init__(self, api_key: str):
-        # ⚠️ 중요: GitHub용 코드에는 하드코딩된 키를 제거하고, 인자로 받은 api_key를 씁니다.
         # 모델명은 최신 버전인 'gemini-2.0-flash'로 유지합니다.
         self.model = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash", 
@@ -12,7 +10,7 @@ class GeminiHandler(BaseAPIHandler):
             temperature=0
         )
 
-    def generate_keywords(self, query: str) -> str:
+    async def generate_keywords(self, query: str) -> str:
         # 동기(Sync) 방식으로 invoke 사용 (async await 문제 방지)
         prompt = ChatPromptTemplate.from_messages(
             [

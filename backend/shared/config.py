@@ -1,16 +1,23 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
     """애플리케이션 설정"""
 
+    # lora 모델 경로 설정
+    LORA_MODEL_PATH = os.getenv("LORA_MODEL_PATH")
+    
     # OpenAI 설정
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = "gpt-4o"
 
     # Gemini 설정
-    GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
     GEMINI_FLASH_MODEL: str = "gemini-2.5-flash"
     GEMINI_PRO_MODEL: str = "gemini-2.5-pro"
     
@@ -34,10 +41,6 @@ class Settings(BaseSettings):
     STRATEGY_SERVICE_URL: str = "http://localhost:8002"
     RETRIEVAL_SERVICE_URL: str = "http://localhost:8003"
     GENERATION_SERVICE_URL: str = "http://localhost:8004"
-    
-    # 도서관 설정
-    YONSEI_LIBRARY_BASE_URL: str = "https://library.yonsei.ac.kr"
-    SCRAPING_DELAY: float = 1.0  # 요청 간 지연 시간 (초)
     
     # 로깅 설정
     LOG_LEVEL: str = "INFO"

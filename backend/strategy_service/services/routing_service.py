@@ -4,7 +4,6 @@ import sys
 import os
 
 # shared 모듈 경로 설정
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from shared.models import RoutingDecision
 
 # [수정된 프롬프트] 키워드 필드명을 명확하게 강제합니다.

@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_cohere import ChatCohere
 
-from .base import BaseAPIHandler
+from strategy_service.core.providers.base import BaseAPIHandler
 
 
 class CohereHandler(BaseAPIHandler):
@@ -11,7 +11,7 @@ class CohereHandler(BaseAPIHandler):
         else:
             self.model = None
 
-    def generate_keywords(self, query: str) -> str:
+    async def generate_keywords(self, query: str) -> str:
         if not self.model: return "[Error] Cohere API Key Missing"
         # 프롬프트 구성
         prompt = ChatPromptTemplate.from_messages(

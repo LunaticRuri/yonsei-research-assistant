@@ -1,35 +1,38 @@
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
-import os
-import sys
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
-# [!] 경로 설정 (어디서 실행하든 현재 파일 위치 기준으로 경로 잡기)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
-sys.path.append(os.path.abspath(os.path.join(current_dir, 'services')))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '../shared')))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
+from shared.models import (
+    QueryToKeywordRequest,
+    RoutingRequestWithQuery,
+    RoutingDecision,
+    SearchRequest
+)
+from shared.config import settings
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # .env 로드
 try:
-    load_dotenv(dotenv_path='../.env')
+    load_dotenv()
 except Exception as e:
     print(f"[경고] .env 파일 로드 실패: {e}")
 
 # --- Import Modules ---
 # [1] 검색어 생성기 (Factory Pattern)
-from core.generator import QueryTranslationService
+from strategy_service.core.generator import QueryTranslationService
 # [2] 검색 클라이언트 (Retrieval Service 연동)
-from core.retrieval_client import RetrievalClient
+from strategy_service.core.retrieval_client import RetrievalClient
 # [3] 로거 (A/B Test 데이터 수집)
-from utils.logger import log_experiment
+from strategy_service.utils.logger import log_experiment
 
 # [!] 기존 서비스/모델 임포트 (안전장치)
 try:
-    from services.routing_service import get_routing_decision
+    from strategy_service.services.routing_service import get_routing_decision
     from shared.models import RoutingDecision
 except ImportError:
     print("⚠️ [Warning] 라우팅 서비스 파일을 찾을 수 없습니다. Mock 객체를 사용합니다.")
@@ -46,17 +49,17 @@ retrieval_client = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global translation_service, retrieval_client
-    print("🚀 [System] Strategy Service 시작!")
+    print("[System] Strategy Service 시작!")
     
     # 1. 키워드 생성기 로드 (LoRA 모델)
-    ADAPTER_PATH = "./models/query_translation_adapter_final"
-    translation_service = QueryTranslationService(adapter_path=ADAPTER_PATH)
+    LORA_MODEL_PATH = settings.LORA_MODEL_PATH
+    translation_service = QueryTranslationService(adapter_path=LORA_MODEL_PATH)
     
     # 2. 검색 클라이언트 초기화
     retrieval_client = RetrievalClient()
     
     yield
-    print("👋 [System] Strategy Service 종료.")
+    print("[System] Strategy Service 종료.")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -67,13 +70,8 @@ def get_llm_client():
     except:
         return None
 
-# --- DTO Definition ---
-
-class QueryRequest(BaseModel):
-    """기존 라우팅 요청용"""
-    query: str
-
 class KeywordRequest(BaseModel):
+    # NOTE: Depricated!
     """
     [New] 통합 검색 요청용 (A/B 테스트 및 확장 지원)
     mode: 'openai', 'lora', 'gemini'(예정) 등
@@ -85,11 +83,11 @@ class KeywordRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "Strategy Service (Full Pipeline: Gen -> Log -> Search) is Running!"}
+    return {"message": "Strategy Service is running!"}
 
 # 1. 라우팅 엔드포인트
 @app.post("/api/v1/strategy/route", response_model=RoutingDecision)
-async def route_query(request: QueryRequest, llm_client: OpenAI = Depends(get_llm_client)):
+async def route_query(request: RoutingRequestWithQuery, llm_client: OpenAI = Depends(get_llm_client)):
     """사용자 질문을 분석하여 검색 경로(Routing)를 결정합니다."""
     decision = await get_routing_decision(request.query, llm_client)
     return decision
@@ -140,6 +138,30 @@ async def generate_keywords_and_search(request: KeywordRequest):
     }
 
 # 3. CLI 인터페이스용 실제 동작 엔드포인트
-@app.post("/api/v1/strategy/cli_search")
-async def cli_generate_search_request(request: KeywordRequest):
-    pass
+# Strategy -> Routing 통합 요청
+# Gemini 크레딧이 있어서 CLI는 기본설정을 Gemini로 함
+# TODO: 구현해야 함!
+@app.post("/api/v1/strategy/cli_stratrgy_request")
+async def cli_stratrgy_request(request: QueryToKeywordRequest) -> SearchRequest:
+    
+    if translation_service is None or retrieval_client is None:
+        raise HTTPException(status_code=500, detail="서비스가 초기화되지 않았습니다.")
+
+    # STEP 1: Query -> Keywords
+    gen_result = translation_service.generate_keywords(request.query, mode=request.mode)
+    keywords_str = gen_result['keywords']
+    latency = gen_result['latency_ms']
+    
+    logger.info(f"   ↳ 생성된 키워드: {keywords_str} ({latency}ms)")
+
+    # (문자열 결과를 리스트로 변환: 쉼표 기준 파싱)
+    if isinstance(keywords_str, str):
+        # "키워드1, 키워드2" -> ["키워드1", "키워드2"]
+        keyword_list = [k.strip() for k in keywords_str.split(',') if k.strip()]
+    else:
+        keyword_list = []
+    
+    # STEP 2: Determine Routing (현재는 무조건 'search-agent'로 고정)
+    
+
+    

@@ -1,11 +1,11 @@
 from openai import OpenAI
-from .base import BaseAPIHandler
+from strategy_service.core.providers.base import BaseAPIHandler
 
 class OpenAIHandler(BaseAPIHandler):
     def __init__(self, api_key):
         self.client = OpenAI(api_key=api_key) if api_key else None
 
-    def generate_keywords(self, query: str) -> str:
+    async def generate_keywords(self, query: str) -> str:
         if not self.client:
             return "[Error] OpenAI API Key Missing"
 

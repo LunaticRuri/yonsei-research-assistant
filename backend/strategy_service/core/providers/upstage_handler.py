@@ -2,7 +2,7 @@ import os
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_upstage import ChatUpstage
 
-from .base import BaseAPIHandler
+from strategy_service.core.providers.base import BaseAPIHandler
 
 
 class UpstageHandler(BaseAPIHandler):
@@ -12,7 +12,7 @@ class UpstageHandler(BaseAPIHandler):
         else:
             self.model = None
 
-    def generate_keywords(self, query: str) -> str:
+    async def generate_keywords(self, query: str) -> str:
         if not self.model: return "[Error] Upstage API Key Missing"
         # 프롬프트 구성
         prompt = ChatPromptTemplate.from_messages(
