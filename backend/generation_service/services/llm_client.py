@@ -1,8 +1,14 @@
 from google import genai
-from typing import Optional, Dict, Any, List
+from shared.models import SelfRAGPromptType, SelfRAGPromptResult
 from shared.config import settings
+from generation_service.prompts import (
+    SELF_RAG_RELEVANCE_CHECK_PROMPT,
+    SELF_RAG_HALLUCINATION_CHECK_PROMPT,
+    SELF_RAG_HELPFULNESS_CHECK_PROMPT,
+    FINAL_GENERATION_PROMPT_TEMPLATE
+)
+
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -10,83 +16,88 @@ class LLMClient:
     """Gemini Client for Generation Service"""
     
     def __init__(self):
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model_name = settings.GEMINI_FLASH_MODEL
-        
-    def _convert_messages_to_gemini(self, messages: List[Dict[str, str]]) -> tuple[str, List[Dict[str, Any]]]:
-        """
-        Convert OpenAI style messages to Gemini format.
-        Returns (system_instruction, contents)
-        """
-        system_instruction = None
-        contents = []
-        
-        for msg in messages:
-            role = msg["role"]
-            content = msg["content"]
-            
-            if role == "system":
-                system_instruction = content
-            elif role == "user":
-                contents.append({"role": "user", "parts": [content]})
-            elif role == "assistant":
-                contents.append({"role": "model", "parts": [content]})
-                
-        return system_instruction, contents
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.flash_model_name = settings.GEMINI_FLASH_MODEL # self-rag에 사용
+        self.pro_model_name = settings.GEMINI_PRO_MODEL # 최종 답변 생성에 사용
 
-    async def generate_response(
-        self, 
-        messages: list[dict],
-        max_tokens: Optional[int] = 2000,
-        temperature: float = 0.7,
-        response_format: Optional[dict] = None
-    ) -> str:
-        """Generate response from Gemini"""
+        # NOTE: Self-RAG 평가 기준 점수 조절 가능
+        self.pass_threshold = 3  # Self-RAG 평가 통과 기준 점수
+        
+    async def generate_self_rag_response(
+        self,
+        prompt_type: SelfRAGPromptType,
+        query_text: str = None,
+        documents_text: str = None,
+        answer_text: str = None,
+    ) -> bool:
+        """Generate Self-RAG response from Gemini"""
         try:
-            system_instruction, contents = self._convert_messages_to_gemini(messages)
+            formatted_prompt = ""
+            if prompt_type == SelfRAGPromptType.RELEVANCE_CHECK:
+                if not query_text or not documents_text:
+                    raise ValueError("original_query and documents_text are required for RELEVANCE_CHECK")
+                formatted_prompt = SELF_RAG_RELEVANCE_CHECK_PROMPT.format(
+                    query_text=query_text,
+                    documents_text=documents_text
+                )
+            elif prompt_type == SelfRAGPromptType.HALLUCINATION_CHECK:
+                if not answer_text or not documents_text:
+                    raise ValueError("answer_text and documents_text are required for HALLUCINATION_CHECK")
+                formatted_prompt = SELF_RAG_HALLUCINATION_CHECK_PROMPT.format(
+                    answer_text=answer_text,
+                    documents_text=documents_text
+                )
+            elif prompt_type == SelfRAGPromptType.HELPFULNESS_CHECK:
+                if not query_text or not answer_text:
+                    raise ValueError("original_query and answer_text are required for HELPFULNESS_CHECK")
+                formatted_prompt = SELF_RAG_HELPFULNESS_CHECK_PROMPT.format(
+                    query_text=query_text,
+                    answer_text=answer_text
+                )
+            else:
+                raise ValueError(f"Unsupported prompt type: {prompt_type}")
             
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=system_instruction
+            response = await self.client.aio.models.generate_content(
+                model=self.flash_model_name,
+                contents=formatted_prompt,
+                config={
+                    'response_mime_type': 'application/json',
+                    'response_schema': SelfRAGPromptResult
+                }
             )
+            result: SelfRAGPromptResult = response.parsed
             
-            generation_config = genai.types.GenerationConfig(
-                max_output_tokens=max_tokens,
-                temperature=temperature,
-            )
+            if not result:
+                raise ValueError("Failed to parse Self-RAG response")
             
-            if response_format and response_format.get("type") == "json_object":
-                generation_config.response_mime_type = "application/json"
-            
-            response = await model.generate_content_async(
-                contents,
-                generation_config=generation_config
-            )
-            
-            return response.text
+            if result.evaluation >= self.pass_threshold:
+                self.logger.info(f"Self-RAG {prompt_type.value} check passed with score {result.evaluation}")
+                return True
+            else:
+                self.logger.info(f"Self-RAG {prompt_type.value} check failed with score {result.evaluation}")
+                self.logger.info(f"Reason: {result.reason}")
+                return False
             
         except Exception as e:
             logger.error(f"Gemini API call failed: {e}")
             raise
     
-    async def generate_json(
-        self, 
-        messages: list[dict],
-        max_tokens: Optional[int] = 2000,
-        temperature: float = 0.7
-    ) -> Dict[str, Any]:
-        """Generate JSON response"""
+    async def generate_final_response(
+        self,
+        query_text: str,
+        documents_text: str
+    ) -> str:
+        """Generate final response from Gemini Pro model"""
         try:
-            content = await self.generate_response(
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                response_format={"type": "json_object"}
+            response = await self.client.aio.models.generate_content(
+                model=self.pro_model_name,
+                contents=FINAL_GENERATION_PROMPT_TEMPLATE.format(
+                    query=query_text,
+                    documents_text=documents_text
+                )
             )
-            return json.loads(content)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
-            raise
+            return response.text
+            
         except Exception as e:
-            logger.error(f"JSON generation failed: {e}")
+            logger.error(f"Gemini Pro API call failed: {e}")
             raise

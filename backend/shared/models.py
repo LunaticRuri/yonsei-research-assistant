@@ -253,10 +253,20 @@ class GenerationRequest(BaseModel):
     query: str = Field(description="Original user query")
     retrieval_result: RetrievalResult = Field(description="Result from Retrieval Service")
 
+class SelfRAGPromptType(str, Enum):
+    RELEVANCE_CHECK = "relevance_check" # 문서 관련성 여부
+    HALLUCINATION_CHECK = "hallucination_check" # 환각 현상 여부
+    HELPFULNESS_CHECK = "helpfulness_check" # 질문 해결 유용성 여부
+
+class SelfRAGPromptResult(BaseModel):
+    evaluation: int = Field(ge=1, le=5, description="LLM이 평가한 점수 (1-5)")
+    reason: str = Field(description="LLM이 생성한 근거 설명")
+
 class GenerationResultType(str, Enum):
     ANSWER = "answer"
     REQUESTIONING = "requestioning"
     NO_DOCUMENTS = "no_documents"
+    ERROR = "error"
 
 class GenerationResult(BaseModel):
     """Final response from Generation Service"""
@@ -265,13 +275,11 @@ class GenerationResult(BaseModel):
         default=GenerationResultType.ANSWER,
         description="Type of generation result"
     )
-    citations: List[int] = Field(default=[], description="List of document indices cited")
-    is_supported_score: int = Field(description="Self-evaluation: Support score (1-5)")
-    is_useful_score: int = Field(description="Self-evaluation: Utility score (1-5)")
-    reasoning: Optional[str] = Field(default=None, description="Reasoning for self-evaluation")
-    
-    # Metadata from retrieval for frontend display
-    retrieval_metadata: Optional[dict] = Field(default=None)
+    reasoning: Optional[str] = Field(
+        default=None,
+        description="LLM이 답변을 생성한 근거 설명 (디버깅용)"
+    )
+    retrieval_metadata: Optional[dict] = Field(description="Metadata from retrieval for display", default=None)
 
 # ================== [New] 추가: 간편 연동용 모델 ==================
 

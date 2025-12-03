@@ -14,9 +14,6 @@ class Settings(BaseSettings):
     GEMINI_FLASH_MODEL: str = "gemini-2.5-flash"
     GEMINI_PRO_MODEL: str = "gemini-2.5-pro"
     
-    # 데이터베이스 설정
-    # CHROMA_DB_PATH: str = "./data/chroma_db"
-    
     # 서비스 URL들
     DIALOGUE_SERVICE_URL: str = "http://localhost:8001"
     STRATEGY_SERVICE_URL: str = "http://localhost:8002"
@@ -29,16 +26,6 @@ class Settings(BaseSettings):
     
     # 로깅 설정
     LOG_LEVEL: str = "INFO"
-    
-    # 세션 설정
-    SESSION_TIMEOUT: int = 3600  # 1시간 (초)
-    
-    # CORS 설정
-    CORS_ORIGINS: list = ["http://localhost:3000"]
-    
-    # 캐싱 설정
-    ENABLE_CACHING: bool = True
-    CACHE_TTL: int = 300  # 5분 (초)
     
     class Config:
         env_file = ".env"
