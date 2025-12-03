@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from shared.models import (
     QueryToKeywordRequest,
-    RoutingRequestWithQuery,
+    RoutingRequestOld,
     RoutingDecision,
     SearchRequest
 )
@@ -88,7 +88,7 @@ def read_root():
 
 # 1. 라우팅 엔드포인트
 @app.post("/api/v1/strategy/route", response_model=RoutingDecision)
-async def route_query(request: RoutingRequestWithQuery, llm_client: OpenAI = Depends(get_llm_client)):
+async def route_query(request: RoutingRequestOld, llm_client: OpenAI = Depends(get_llm_client)):
     """사용자 질문을 분석하여 검색 경로(Routing)를 결정합니다."""
     decision = await get_routing_decision(request.query, llm_client)
     return decision

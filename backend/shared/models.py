@@ -24,7 +24,7 @@ class DialogueRequest(BaseModel):
 
 # ================== strategy-service 부분 ==================
 
-class RoutingRequestWithQuery(BaseModel):
+class RoutingRequestOld(BaseModel):
     """기존 라우팅 요청용"""
     query: str
 
@@ -42,8 +42,19 @@ class RetrievalRoute(str, Enum):
     YONSEI_HOLDINGS = "yonsei_holdings" 
     YONSEI_ELECTRONICS = "yonsei_electronics"
 
+class RoutingRequest(BaseModel):
+    query: str
+    keywords: List[str]
+
 class RoutingDecision(BaseModel):
-    route: RetrievalRoute = Field(..., description="라우팅 경로, RetrievalRoute 참고!")
+    routes: List[RetrievalRoute] = Field(
+        default=[
+            RetrievalRoute.VECTOR_DB,
+            RetrievalRoute.YONSEI_HOLDINGS,
+            RetrievalRoute.YONSEI_ELECTRONICS
+        ],
+        description="가능한 검색 경로들"
+    )
     reason: str = Field(..., description="라우팅 결정 이유")
 
 # ================== retrieval-service 부분 ==================
@@ -76,15 +87,18 @@ class ElectronicSearchField(str, Enum):
     AUTHOR = "AU"    
     SUBJECT = "SU"  
 
+class DefaultSearchField(str, Enum):
+    TOTAL = "ALL"
+
 class SearchQueries(BaseModel):
     query_1: str
-    search_field_1: Union[str, LibrarySearchField, ElectronicSearchField]
+    search_field_1: Union[str, DefaultSearchField, LibrarySearchField, ElectronicSearchField]
     operator_1: Optional[QueryOperator] = None
     query_2: Optional[str] = None
-    search_field_2: Optional[Union[str, LibrarySearchField, ElectronicSearchField]] = None
+    search_field_2: Optional[Union[str, DefaultSearchField, LibrarySearchField, ElectronicSearchField]] = None
     operator_2: Optional[QueryOperator] = None
     query_3: Optional[str] = None
-    search_field_3: Optional[Union[str, LibrarySearchField, ElectronicSearchField]] = None
+    search_field_3: Optional[Union[str, DefaultSearchField, LibrarySearchField, ElectronicSearchField]] = None
     
     @model_validator(mode='after')
     def validate_query_sequence(self):

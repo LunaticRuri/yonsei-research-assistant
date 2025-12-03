@@ -15,7 +15,8 @@ from strategy_service.core.providers.gemini_handler import GeminiHandler
 from shared.models import StrategyServiceMode
 from shared.config import settings
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 class QueryTranslationService:
     def __init__(self, adapter_path: str = None):
@@ -46,7 +47,7 @@ class QueryTranslationService:
         if adapter_path and os.path.exists(adapter_path):
             try:
                 base_model_id = "paust/pko-chat-t5-large"
-                print(f"🔄 LoRA 모델 로드 시도: {adapter_path}")
+                logging.info(f"🔄 LoRA 모델 로드 시도: {adapter_path}")
                 self.tokenizer = AutoTokenizer.from_pretrained(base_model_id)
                 base_model = AutoModelForSeq2SeqLM.from_pretrained(
                     base_model_id, 
@@ -55,11 +56,11 @@ class QueryTranslationService:
                 )
                 self.lora_model = PeftModel.from_pretrained(base_model, adapter_path)
                 self.lora_model.eval()
-                print("✅ LoRA 모델 로드 완료!")
+                logging.info("✅ LoRA 모델 로드 완료!")
             except Exception as e:
-                print(f"❌ LoRA 로드 실패: {e}")
+                logging.error(f"❌ LoRA 로드 실패: {e}")
         else:
-            print(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
+            logging.warning(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
 
     async def _generate_by_lora(self, query):
         if self.lora_model is None:
@@ -75,23 +76,32 @@ class QueryTranslationService:
     async def generate_keywords(self, query, mode: StrategyServiceMode):
         start_time = time.time()
         result = ""
-
-        # 1. LoRA 모드
-        if mode == "lora":
-            result = self._generate_by_lora(query)
-        
-        # 2. API 모드 (동적 선택)
-        elif mode in self.api_providers:
-            handler = self.api_providers[mode]
-            result = await handler.generate_keywords(query)
-        
-        # 3. 지원하지 않는 모드
-        else:
-            result = f"[Error] 지원하지 않는 모드입니다: {mode}. (가능: lora, {', '.join(self.api_providers.keys())})"
+        try:
+            # 1. LoRA 모드
+            if mode == "lora":
+                result = self._generate_by_lora(query)
             
-        return {
-            "query": query, 
-            "mode": mode, 
-            "keywords": result,
-            "latency_ms": round((time.time() - start_time) * 1000, 2)
-        }
+            # 2. API 모드 (동적 선택)
+            elif mode in self.api_providers:
+                handler = self.api_providers[mode]
+                result = await handler.generate_keywords(query)
+            
+            # 3. 지원하지 않는 모드
+            else:
+                logger.error(f"지원하지 않는 모드: {mode} -> 기본값 반환")
+                raise ValueError("Unsupported mode")
+            
+            return {
+                "query": query, 
+                "mode": mode, 
+                "keywords": result,
+                "latency_ms": round((time.time() - start_time) * 1000, 2)
+            }
+        except Exception as e:
+            logger.error(f"키워드 생성 실패: {e}, 모드: {mode} -> 기본값 반환")
+            return {
+                "query": query, 
+                "mode": mode, 
+                "keywords": query,
+                "latency_ms": round((time.time() - start_time) * 1000, 2)
+            }
