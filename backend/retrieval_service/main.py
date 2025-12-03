@@ -21,7 +21,7 @@ async def search(request: SearchRequest):
     전체 검색 파이프라인 실행 엔드포인트
     """
     try:
-        logger.info(f"Generating response for query: {request.query}")
+        logger.info(f"Generating response for query: {request.user_query}")
         result = await service.execute(request)
         return result
     except Exception as e:

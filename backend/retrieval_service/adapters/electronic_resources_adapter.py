@@ -45,7 +45,7 @@ class ElectronicResourcesAdapter(BaseRetriever):
             ElectronicSearchParams: 전자자료 어댑터용 검색 파라미터 객체
         """
         queries = request.queries
-        filters = request.filters
+        filters = request.filters or {}
         
         query = await self._filter_nouns(queries.query_1)
         search_field = queries.search_field_1 if isinstance(queries.search_field_1, ElectronicSearchField) else ElectronicSearchField.TOTAL

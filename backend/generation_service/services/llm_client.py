@@ -2,9 +2,9 @@ from google import genai
 from shared.models import SelfRAGPromptType, SelfRAGPromptResult
 from shared.config import settings
 from generation_service.prompts import (
-    SELF_RAG_RELEVANCE_CHECK_PROMPT,
-    SELF_RAG_HALLUCINATION_CHECK_PROMPT,
-    SELF_RAG_HELPFULNESS_CHECK_PROMPT,
+    SELF_RAG_RELEVANCE_PROMPT_TEMPLATE,
+    SELF_RAG_HALLUCINATION_PROMPT_TEMPLATE,
+    SELF_RAG_HELPFULNESS_PROMPT_TEMPLATE,
     FINAL_GENERATION_PROMPT_TEMPLATE
 )
 
@@ -36,21 +36,21 @@ class LLMClient:
             if prompt_type == SelfRAGPromptType.RELEVANCE_CHECK:
                 if not query_text or not documents_text:
                     raise ValueError("original_query and documents_text are required for RELEVANCE_CHECK")
-                formatted_prompt = SELF_RAG_RELEVANCE_CHECK_PROMPT.format(
+                formatted_prompt = SELF_RAG_RELEVANCE_PROMPT_TEMPLATE.format(
                     query_text=query_text,
                     documents_text=documents_text
                 )
             elif prompt_type == SelfRAGPromptType.HALLUCINATION_CHECK:
                 if not answer_text or not documents_text:
                     raise ValueError("answer_text and documents_text are required for HALLUCINATION_CHECK")
-                formatted_prompt = SELF_RAG_HALLUCINATION_CHECK_PROMPT.format(
+                formatted_prompt = SELF_RAG_HALLUCINATION_PROMPT_TEMPLATE.format(
                     answer_text=answer_text,
                     documents_text=documents_text
                 )
             elif prompt_type == SelfRAGPromptType.HELPFULNESS_CHECK:
                 if not query_text or not answer_text:
                     raise ValueError("original_query and answer_text are required for HELPFULNESS_CHECK")
-                formatted_prompt = SELF_RAG_HELPFULNESS_CHECK_PROMPT.format(
+                formatted_prompt = SELF_RAG_HELPFULNESS_PROMPT_TEMPLATE.format(
                     query_text=query_text,
                     answer_text=answer_text
                 )

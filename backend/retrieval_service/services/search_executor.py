@@ -1,7 +1,7 @@
 import logging
 import time
 
-from shared.models import SearchRequest, RetrievalResult
+from shared.models import SearchRequest, RetrievalResult, GenerationRequest
 from retrieval_service.services.retriever import RetrieverService
 from retrieval_service.services.ranker import RankerService
 from retrieval_service.services.refiner import RefinerService
@@ -29,7 +29,7 @@ class SearchExecutor:
         start_time = time.time()
         
         # Step 1: 검색
-        self.logger.info(f"Starting retrieval for {len(request.queries)} queries")
+        self.logger.info(f"Starting retrieval for queries")
         raw_documents = await self.retriever.retrieve_all(request)
         
         if not raw_documents:
@@ -84,9 +84,13 @@ class SearchExecutor:
             f"Search completed in {elapsed_time:.2f}s: "
             f"{len(filtered_documents)} final documents"
         )
-        
-        return RetrievalResult(
+        retrieval_result = RetrievalResult(
             documents=filtered_documents,
             metadata=metadata,
             needs_requestioning=needs_requestioning
+        )
+
+        return GenerationRequest(
+            query=request.user_query,
+            retrieval_result=retrieval_result
         )

@@ -134,4 +134,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
     
     # 최종 SearchRequest 반환
     return search_request
-    
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8002)

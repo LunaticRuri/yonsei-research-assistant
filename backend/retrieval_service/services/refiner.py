@@ -1,9 +1,8 @@
 from typing import List
 from google import genai
 from google.genai import types
-from config import settings
+from retrieval_service.config import settings
 import logging
-import json
 
 from shared.models import RankedDocument, AnalysisUserQuery, CRAGResult, RelevanceLevel, GeneratedCRAGResponse
 
@@ -11,7 +10,7 @@ class RefinerService:
     """CRAG (Corrective RAG) - 검색 결과 품질 평가"""
     
     def __init__(self):
-        self.client = genai.Client(api_key=settings.GENAI_API_KEY)
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.model_name = settings.CRAG_LLM_MODEL
         self.relevance_threshold = settings.CRAG_RELEVANCE_THRESHOLD
         self.incorrect_ratio_threshold = settings.CRAG_INCORRECT_RATIO_THRESHOLD
@@ -65,6 +64,11 @@ class RefinerService:
                     doc, analyzed_user_query
                 )
                 results.append(crag_result)
+                self.logger.info(
+                    f"Evaluated doc: {doc.content[:50]}... "
+                    f"as {crag_result.relevance} "
+                    f"(confidence: {crag_result.confidence})"
+                )
                 
             except Exception as e:
                 self.logger.error(f"CRAG evaluation failed: {e}")

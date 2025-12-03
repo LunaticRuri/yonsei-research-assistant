@@ -253,6 +253,7 @@ class CRAGResult(BaseModel):
 
 class RetrievalResult(BaseModel):
     documents: List[RankedDocument] = Field(
+        default_factory=list,
         description="CRAG 필터링 + Rerank 완료 문서"
     )
     metadata: Dict[str, Any] = Field(

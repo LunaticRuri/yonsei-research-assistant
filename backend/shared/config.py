@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """애플리케이션 설정"""
 
     # lora 모델 경로 설정
-    LORA_MODEL_PATH = os.getenv("LORA_MODEL_PATH")
+    LORA_MODEL_PATH: str = os.getenv("LORA_MODEL_PATH")
     
     # OpenAI 설정
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 # 전역 설정 인스턴스
 settings = Settings()

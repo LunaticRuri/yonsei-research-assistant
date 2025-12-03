@@ -53,7 +53,7 @@ class VectorDBAdapter(BaseRetriever):
             VectorSearchParams: Vector DB 검색 파라미터 객체
         """
         queries = request.queries
-        filters = request.filters
+        filters = request.filters or {}
 
         query_1 = queries.query_1
         
@@ -165,10 +165,15 @@ class VectorDBAdapter(BaseRetriever):
             cur = self.sqlite_connection.cursor()
             cur.execute(sql, params)
             results = cur.fetchall()
-            self.sqlite_connection.close()
+            cur.close()
 
             documents = []
             for isbn, title, publication_year, intro, toc, subjects in results:
+                
+                title = title if title else "제목 없음"
+                intro = intro if intro else ""
+                toc = toc if toc else ""
+                
                 doc = Document(
                     content=title + "\n\n" + intro + "\n\n" + toc,
                     metadata={
