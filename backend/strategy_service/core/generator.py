@@ -7,8 +7,10 @@ from peft import PeftModel
 # 부품들 가져오기
 from strategy_service.core.providers.openai_handler import OpenAIHandler
 from strategy_service.core.providers.gemini_handler import GeminiHandler
-from strategy_service.core.providers.cohere_handler import CohereHandler
-from strategy_service.core.providers.upstage_handler import UpstageHandler
+
+# NOTE: 아래 두 핸들러는 현재 주석 처리 상태
+# from strategy_service.core.providers.cohere_handler import CohereHandler
+# from strategy_service.core.providers.upstage_handler import UpstageHandler
 
 from shared.models import StrategyServiceMode
 from shared.config import settings
