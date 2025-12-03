@@ -1,5 +1,6 @@
 from typing import List, Dict
 import random
+import asyncio
 from sentence_transformers import CrossEncoder
 import logging
 from collections import defaultdict
@@ -48,7 +49,7 @@ class RankerService:
         self.logger.info(f"Final ranked documents: {len(final_docs)}")
         return final_docs
 
-    def rerank_and_fuse(
+    async def rerank_and_fuse(
         self,
         documents: List[Document],
         user_query: str,
@@ -72,7 +73,7 @@ class RankerService:
         self.logger.info(f"Deduplicated: {len(documents)} -> {len(unique_docs)}")
         
         # 2. Cross-encoder로 재점수
-        reranked = self._cross_encoder_rerank(unique_docs, user_query)
+        reranked = await self._cross_encoder_rerank(unique_docs, user_query)
         
         # 3. Fusion 전략 적용
         if method == "rrf":
@@ -106,16 +107,21 @@ class RankerService:
         
         return unique
     
-    def _cross_encoder_rerank(
+    async def _cross_encoder_rerank(
         self,
         documents: List[Document],
         query: str
     ) -> List[RankedDocument]:
         """Cross-encoder로 쿼리-문서 관련성 재평가"""
         
+        if not documents:
+            return []
+
         # Batch로 점수 계산
         pairs = [[query, doc.content] for doc in documents]
-        scores = self.reranker.predict(pairs)
+
+        loop = asyncio.get_running_loop()
+        scores = await loop.run_in_executor(None, self.reranker.predict, pairs)
         
         # RankedDocument로 변환
         ranked = []

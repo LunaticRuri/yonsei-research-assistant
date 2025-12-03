@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI

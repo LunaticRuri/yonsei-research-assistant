@@ -42,7 +42,7 @@ class SearchExecutor:
         
         # Step 2: Rerank + Fusion
         self.logger.info(f"Reranking {len(raw_documents)} documents")
-        ranked_documents = self.ranker.rerank_and_fuse(
+        ranked_documents = await self.ranker.rerank_and_fuse(
             documents=raw_documents,
             user_query=request.user_query
         )

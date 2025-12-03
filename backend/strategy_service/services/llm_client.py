@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 # backend/strategy-service/services/llm_client.py (최종 수정본)
 
 # [삭제] import os
