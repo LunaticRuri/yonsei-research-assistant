@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 # backend/strategy-service/app/test_routing_module.py
 import asyncio
 from openai import OpenAI # 실제로는 config에서 클라이언트를 가져와야 합니다.

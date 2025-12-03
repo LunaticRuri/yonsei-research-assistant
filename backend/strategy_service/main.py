@@ -55,14 +55,16 @@ async def lifespan(app: FastAPI):
     LORA_MODEL_PATH = settings.LORA_MODEL_PATH
     translation_service = QueryTranslationService(adapter_path=LORA_MODEL_PATH)
     
+    # NOTE: 나중에 리펙토링 되면 쓰기
     # 2. 검색 클라이언트 초기화
-    retrieval_client = RetrievalClient()
+    # retrieval_client = RetrievalClient()
     
     yield
     print("[System] Strategy Service 종료.")
 
 app = FastAPI(lifespan=lifespan)
 
+# XXX: 의존성 패턴 왜?
 # --- 의존성 주입 ---
 def get_llm_client():
     try:
@@ -162,6 +164,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest) -> SearchRequest:
         keyword_list = []
     
     # STEP 2: Determine Routing (현재는 무조건 'search-agent'로 고정)
+    
     
 
     

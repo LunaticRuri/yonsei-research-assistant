@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 from typing import List, Dict, Any
 from shared.models import SearchStrategyResponse, SearchStrategy # (이건 backend/에서 실행해서 OK)
 from .keyword_analyzer import KeywordAnalyzer # <--- 1번 수정! (같은 폴더에 있다는 뜻)

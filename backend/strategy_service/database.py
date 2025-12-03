@@ -1,3 +1,6 @@
+#**********************************************
+# DEPRICIATED!
+#**********************************************
 import redis
 # [삭제] import os <-- 더 이상 사용하지 않습니다.
 from .config import settings  # <--- [추가!] config.py에서 settings를 임포트합니다.
