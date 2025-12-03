@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from shared.models import DialogueRequest, DialogueResponse
-from services.dialogue_engine import DialogueEngine
-from services.llm_client import LLMClient
+from dialogue_service.services.llm_client import LLMClient
+from dialogue_service.old.services.dialogue_engine import DialogueEngine
 import logging
 
 logging.basicConfig(level=logging.INFO)

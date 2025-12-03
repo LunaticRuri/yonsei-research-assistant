@@ -138,3 +138,8 @@ async def generate_keywords_and_search(request: KeywordRequest):
         "strategy_result": gen_result, # 키워드 생성 결과
         "retrieval_result": search_result # 실제 검색 결과 (논문 등)
     }
+
+# 3. CLI 인터페이스용 실제 동작 엔드포인트
+@app.post("/api/v1/strategy/cli_search")
+async def cli_generate_search_request(request: KeywordRequest):
+    pass

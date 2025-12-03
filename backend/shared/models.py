@@ -15,12 +15,6 @@ class SystemStatus(BaseModel):
     services: List[ServiceStatus]
     active_sessions: int
 
-# ===== 대화 기록 =====
-class Conversation(BaseModel):
-    id: str  # 각 대화의 고유 ID (라우팅에 사용)
-    title: str
-    last_updated: str
-
 # ================== dialogue-service 부분 ==================
 
 class DialogueRequest(BaseModel):
