@@ -22,6 +22,8 @@ async def generate_response(request: GenerationRequest):
     """
     try:
         logger.info(f"Generating response for query: {request.query}")
+        # TODO: Self-RAG 비활성화한 경우와 비교
+        # result = await generator_service.generate_without_self_rag(request.query, request.retrieval_result) 
         result = await generator_service.generate(request.query, request.retrieval_result)
         return result
     except Exception as e:

@@ -1,4 +1,4 @@
-from shared.models import RetrievalResult, RankedDocument, GenerationResult
+from shared.models import RetrievalResult, RankedDocument, GenerationResultType, GenerationResult
 from generation_service.services.llm_client import LLMClient
 from generation_service.prompts import SELF_RAG_SYSTEM_PROMPT, SELF_RAG_USER_PROMPT_TEMPLATE
 import logging
@@ -11,27 +11,43 @@ class GeneratorService:
 
     def _format_documents(self, documents: list[RankedDocument]) -> str:
         formatted_docs = []
+        
         for idx, doc in enumerate(documents, 1):
-            # Use metadata to provide context (title, author, etc.)
-            title = doc.metadata.get("title", "No Title")
-            author = doc.metadata.get("author", "Unknown Author")
-            source = doc.source
+            metadata = doc.metadata or {}    
+            metadata_str = "\n".join([f"{key}: {value}" for key, value in metadata.items()])
+            # source = doc.source
             content = doc.content
             
-            doc_str = f"Document [{idx}]\nTitle: {title}\nAuthor: {author}\nSource: {source}\nContent: {content}\n"
+            doc_str = f"--- Document [{idx}] ---\n{metadata_str}\nContent: {content}\n--- End of Document [{idx}] ---\n"
             formatted_docs.append(doc_str)
-        
         return "\n".join(formatted_docs)
+    
+    async def generate_without_self_rag(self, query: str, retrieval_result: RetrievalResult) -> GenerationResult:
+        pass
 
     async def generate(self, query: str, retrieval_result: RetrievalResult) -> GenerationResult:
         """
         Generate a response using Self-RAG approach.
         """
+
+        # TODO: CLI Interface와 함께 생각해서 재질문 요청 구현 필요
+        if retrieval_result.needs_requestioning:
+            return GenerationResult(
+                answer="질문을 다시 작성해 주세요. (CRAG 단계에서 재질문 필요하다고 판단함)",
+                result_type=GenerationResultType.REQUESTIONING,
+                citations=[],
+                is_supported_score=0,
+                is_useful_score=0,
+                reasoning="Requestioning needed.",
+                retrieval_metadata=retrieval_result.metadata
+            )
+
         documents = retrieval_result.documents
         
         if not documents:
             return GenerationResult(
-                answer="죄송합니다. 관련 문서를 찾을 수 없어 답변을 생성할 수 없습니다.",
+                answer="죄송합니다. 관련 문서를 찾을 수 없어 답변을 생성할 수 없습니다. (문서 검색 결과 없음)",
+                result_type=GenerationResultType.NO_DOCUMENTS,
                 citations=[],
                 is_supported_score=0,
                 is_useful_score=0,

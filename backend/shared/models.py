@@ -253,9 +253,18 @@ class GenerationRequest(BaseModel):
     query: str = Field(description="Original user query")
     retrieval_result: RetrievalResult = Field(description="Result from Retrieval Service")
 
+class GenerationResultType(str, Enum):
+    ANSWER = "answer"
+    REQUESTIONING = "requestioning"
+    NO_DOCUMENTS = "no_documents"
+
 class GenerationResult(BaseModel):
     """Final response from Generation Service"""
     answer: str = Field(description="Synthesized answer")
+    result_type: GenerationResultType = Field(
+        default=GenerationResultType.ANSWER,
+        description="Type of generation result"
+    )
     citations: List[int] = Field(default=[], description="List of document indices cited")
     is_supported_score: int = Field(description="Self-evaluation: Support score (1-5)")
     is_useful_score: int = Field(description="Self-evaluation: Utility score (1-5)")

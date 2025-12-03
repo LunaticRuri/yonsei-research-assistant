@@ -12,7 +12,7 @@
 └── backend/                  # 마이크로서비스 및 인프라
     ├── cli_interface/        # 1. 작동 및 시연을 위한 프로그램
     |
-    ├── dialogue_service/     # 2. 소크라테스식 대화 (Port: 8001)
+    ├── dialogue_service/     # 2. 사용자-AI Agent 대화 통한 질문 구체화 (Port: 8001)
     │
     ├── strategy_service/     # 3. RAG 쿼리 처리 (Port: 8002)
     │   │                     # (RAG 다이어그램의 'Query Translation', 'Query Construciton', 'Routing' 담당)
@@ -39,15 +39,14 @@
 
 ## 서비스별 기능
 
-### 1. cli_interface
+### 1. CLI Interface
 
 - 전체적인 작동 모습과 시연을 위한 클라이언트측 프로토타입
 
 ### 2. Dialogue Service (Port: 8001)
 
 - 소크라테스식 대화를 통한 연구 주제 구체화
-- OpenAI GPT-4o를 활용한 지능형 대화
-- 대화 단계별 진행 관리
+- Gemini를 활용한 지능형 대화
 
 ### 3. Strategy Service (Port: 8002)
 

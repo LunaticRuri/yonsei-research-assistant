@@ -1,3 +1,5 @@
+# TODO: 이렇게 말고 그냥 클라이언트에서 각 마이크로서비스로 직접 요청 보내서 조율하도록 바꾸기.
+# FIXME: Generation Service가 완성되고 CLI Interface도 완성되면 지우기!
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
