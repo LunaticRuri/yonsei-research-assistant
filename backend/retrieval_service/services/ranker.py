@@ -131,7 +131,7 @@ class RankerService:
             return []
 
         # Batch로 점수 계산
-        pairs = [[query, doc.content] for doc in documents]
+        pairs = [[query, doc.content[:500]] for doc in documents]
 
         loop = asyncio.get_running_loop()
         scores = await loop.run_in_executor(None, self.reranker.predict, pairs)

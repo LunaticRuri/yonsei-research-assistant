@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("[System] Generation Service 종료.")
 
-app = FastAPI(title="Generation Service", version="1.0.0")
+app = FastAPI(lifespan=lifespan, title="Generation Service", version="1.0.0")
 
 @app.get("/")
 def read_root():

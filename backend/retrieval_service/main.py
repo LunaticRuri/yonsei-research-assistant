@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("[System] Retrieval Service 종료.")
 
-app = FastAPI(title="Retrieval Service", version="1.0.0")
+app = FastAPI(lifespan=lifespan, title="Retrieval Service", version="1.0.0")
 
 # Debugging: 요청 유효성 검사 오류 처리기
 @app.exception_handler(RequestValidationError)
