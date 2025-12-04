@@ -73,15 +73,52 @@ class QueryTranslationService:
         if self.lora_model is None:
             await asyncio.sleep(0.5) 
             return f"[Mock] '{query}'에 대한 로컬 키워드 (모델 미연결)"
+
+        def text_cleaning(text):
+          if not isinstance(text, str):
+            return ""
+
+          text = text.replace('\n', ' ')
+          text = re.sub(r'[^가-힣a-zA-Z0-9 :,]', ',', text)
+
+          first, rest = text.split(":", 1)
+          rest = rest.replace(":", ",")
+          text = first + ":" + rest
+
+          no_words=['혹은', '및',' 등', '또는', '에 대한', '에 대해', '에 관한', '에 관해', '관련']
+          for word in no_words:
+            text = text.replace(word, ',')
+          
+          text = re.sub(r'\s*,+\s*', ',', text)
+          text = re.sub(r'(?<![가-힣A-Za-z0-9]),|,(?![가-힣A-Za-z0-9])', '', text)
+          text = text.strip()
+
+          return text
         
         def run_inference():
-            input_text = f"### 질문:\n{query}\n### 핵심 검색어 목록:"
+            input_text = ChatPromptTemplate.from_messages(
+                [
+                    ("system", "지금부터 당신은 대학 학술 정보원의 사서입니다. 당신은 정보 이용자가 원하는 자료를 가장 효과적으로 검색할 수 있도록 도와야 합니다."),
+                    ("human", """### 질문: {question}\n            저의 '질문'을 해결하기 위해 제가 검색 엔진에 입력할 '핵심 검색어(Keywords)'들을 쉼표(,)로 구분하여 추출해 주세요. 문장이 아닌 명사형 단어 목록으로만 답변해 주세요. 금지어: '특징', '관련', '선행' ,'연구', '논문', '문헌'""")
+                    ]
+            )
+            input_text = input_text.format_messages(question=query)
+            input_text = "\n".join([m.content for m in input_text])
             inputs = self.tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True).to(self.device)
             with torch.no_grad():
-                outputs = self.lora_model.generate(**inputs, max_new_tokens=128)
+                outputs = self.lora_model.generate(**inputs, 
+                                                   max_new_tokens=128, 
+                                                   num_beams=3,
+                                                   repetition_penalty=1.2, 
+                                                   no_repeat_ngram_size=2,
+                                                   early_stopping=True
+                                                   )
+                
             return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        decode = await asyncio.to_thread(run_inference)
         
-        return await asyncio.to_thread(run_inference)
+        return text_cleaning(decode)
 
     async def generate_keywords(self, query, mode: StrategyServiceMode):
         start_time = time.time()
