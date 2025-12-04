@@ -81,11 +81,11 @@ class HoldingsMaterialType(str, Enum):
     ARTICLE = "zart"  
 
 class ElectronicSearchField(str, Enum):
-    TOTAL = ""       
-    KEYWORD = "TX"  
-    TITLE = "TI"     
+    TOTAL = "TX"       
+    KEYWORD = ""  
+    TITLE = "TI"
     AUTHOR = "AU"    
-    SUBJECT = "SU"  
+    SUBJECT = "SU"
 
 class DefaultSearchField(str, Enum):
     TOTAL = "ALL"

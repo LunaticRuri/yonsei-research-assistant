@@ -24,7 +24,7 @@ class ResearchAssistantCLI:
         self.writer = writer
 
         # 키워드 생성 모델 설정
-        # self.keywords_generate_model = "gemini"
+        #self.keywords_generate_model = "gemini"
         self.keywords_generate_model = "lora"
 
     async def print(self, message: str = ""):

@@ -145,6 +145,8 @@ class QueryTranslationService:
                 self.logger.error(f"지원하지 않는 모드: {mode} -> 기본값 반환")
                 raise ValueError("Unsupported mode")
             
+            self.logger.debug(f"키워드 생성 성공: 질문: {query}, 결과: {result}")
+            
             return {
                 "query": query, 
                 "mode": mode, 
