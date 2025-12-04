@@ -17,7 +17,7 @@ class ResearchAssistantCLI:
     def __init__(self, reader, writer):
         self.session_id = str(uuid.uuid4())
         self.conversation_history = []
-        self.client = httpx.AsyncClient(timeout=180.0)
+        self.client = httpx.AsyncClient(timeout=240.0)
         self.reader = reader
         self.writer = writer
 

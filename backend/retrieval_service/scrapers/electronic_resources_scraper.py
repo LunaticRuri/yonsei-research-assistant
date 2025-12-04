@@ -6,10 +6,9 @@ from typing import List, Optional, Literal
 from urllib.parse import quote
 
 from shared.models import ElectronicResourceInfo, ElectronicSearchField
+from shared.config import settings
 from retrieval_service.scrapers.base_scraper import BaseLibraryScraper
 from retrieval_service.scrapers.search_params import BaseSearchParams, YearRange, AdditionalQuery
-
-logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -121,6 +120,10 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
         self.user_id = user_id
         self.user_pw = user_pw
         self.is_logged_in = False
+
+        self.logging = logging.getLogger(__name__)
+        self.logging.addHandler(settings.console_handler)
+        self.logging.addHandler(settings.file_handler)
         
     async def __aenter__(self):
         """
@@ -134,7 +137,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
         if self.user_id and self.user_pw:
             success = await self.perform_login(self.user_id, self.user_pw)
             if not success:
-                logger.error("Auto-login failed during initialization.")
+                self.logger.error("Auto-login failed during initialization.")
                 raise Exception("Login Failed") # 로그인이 필수라면 여기서 에러를 발생시켜서 진행을 막을 수 있음
             else:
                 self.is_logged_in = True
@@ -159,7 +162,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
         try:
             # URL 생성 (전자자료 전용 로직)
             search_url = self._build_electronic_search_url(params, page=1)
-            logger.info(f"Executing electronic resource search: {search_url}")
+            self.logger.info(f"Executing electronic resource search: {search_url}")
             
             # 공통 메서드로 요청
             html_content = await self._fetch(search_url)
@@ -172,9 +175,9 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                 max_results, # 페이징을 위한 파라미터 전달
                 params
                 )
-            logger.info(f"Final result count: {len(search_results)} (requested: {max_results})")
+            self.logger.info(f"Final result count: {len(search_results)} (requested: {max_results})")
             
-            logger.debug(search_results)
+            self.logger.debug(search_results)
         
             # 각 결과에 대해 상세 정보 수집
             detailed_results = []
@@ -187,12 +190,12 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                     await asyncio.sleep(self.request_delay)
                     
                 except Exception as e:
-                    logger.warning(f"Failed to get detailed info for {result.get('title', 'Unknown')}: {e}")
+                    self.logger.warning(f"Failed to get detailed info for {result.get('title', 'Unknown')}: {e}")
                     detailed_results.append(result)  # 기본 정보로 대체
             return detailed_results
         
         except Exception as e:
-            logger.error(f"Electronic resource search failed: {e}")
+            self.logger.error(f"Electronic resource search failed: {e}")
             raise
 
     def _build_electronic_search_url(self, params: ElectronicSearchParams, page: int) -> str:
@@ -301,23 +304,23 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                     try:
                         # "총 10,271건 "에서 숫자 추출
                         total_results_available = int(search_cnt.get_text(strip=True).replace(',',''))
-                        logger.info(f"Total results available: {total_results_available}")
+                        self.logger.info(f"Total results available: {total_results_available}")
                         
                         # 실제 가져올 수 있는 결과 수로 max_result 조정
                         if total_results_available < max_result:
-                            logger.info(f"Adjusting max_result from {max_result} to {total_results_available}")
+                            self.logger.info(f"Adjusting max_result from {max_result} to {total_results_available}")
                             max_result = total_results_available
                     except (ValueError, AttributeError) as e:
-                        logger.warning(f"Failed to parse total result count: {e}")
+                        self.logger.warning(f"Failed to parse total result count: {e}")
             
             # 검색 결과 항목 찾기 - <li class="items"> 선택
             result_items = soup.select('ul.resultList li.items')
             
-            logger.info(f"Found {len(result_items)} result items on page {current_page}")
+            self.logger.info(f"Found {len(result_items)} result items on page {current_page}")
             
             # 현재 페이지에 결과가 없으면 중단
             if not result_items:
-                logger.info(f"No more results found on page {current_page}")
+                self.logger.info(f"No more results found on page {current_page}")
                 break
             
             # 현재 페이지의 결과 수집
@@ -335,7 +338,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                         if checkbox:
                             access_id = checkbox.get('value', '')
                         else:
-                            logger.warning(f"Could not find access ID for item")
+                            self.logger.warning(f"Could not find access ID for item")
                             continue
                     
                     results.append(access_id)
@@ -343,14 +346,14 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                         
                     # max_result 제한 체크
                     if len(results) >= max_result:
-                        logger.info(f"Reached max_result limit: {max_result}")
+                        self.logger.info(f"Reached max_result limit: {max_result}")
                         break
                             
                 except Exception as e:
-                    logger.warning(f"Failed to parse result item: {e}")
+                    self.logger.warning(f"Failed to parse result item: {e}")
                     continue
             
-            logger.info(f"Collected {page_results_count} results from page {current_page}. Total: {len(results)}/{max_result}")
+            self.logger.info(f"Collected {page_results_count} results from page {current_page}. Total: {len(results)}/{max_result}")
             
             # max_result에 도달했거나 params가 없으면 중단
             if len(results) >= max_result or params is None:
@@ -360,7 +363,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
             current_page += 1
             next_url = self._build_electronic_search_url(params, page=current_page)
             
-            logger.info(f"Fetching next page {current_page}: {next_url}")
+            self.logger.info(f"Fetching next page {current_page}: {next_url}")
             
             try:
                 # 윤리적 지연
@@ -372,7 +375,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                     current_html = await response.text()
                 
             except Exception as e:
-                logger.error(f"Failed to fetch page {current_page}: {e}")
+                self.logger.error(f"Failed to fetch page {current_page}: {e}")
                 break
         
         return results
@@ -414,9 +417,9 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                     year = self._extract_year(source)
                     if year and year > 0:
                         publication_year = year
-                        logger.debug(f"Found publication year for {access_id}: {year}")
+                        self.logger.debug(f"Found publication year for {access_id}: {year}")
                 except Exception as e:
-                    logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
+                    self.logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
             
             # 상세 정보 테이블에서 추출
             detail_table = soup.select_one('table#moreInfo')
@@ -476,11 +479,11 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
                     a_tag = online_ul.select_one('a') # 첫 번째 <a> 태그 선택
                     link_url = a_tag.get('href', '')
                 else:
-                    logger.debug("No onlineAccess section found for %s", access_id)
+                    self.logger.debug("No onlineAccess section found for %s", access_id)
             except Exception as e:
-                logger.debug("Failed to extract link_url for %s: %s", access_id, e)
+                self.logger.debug("Failed to extract link_url for %s: %s", access_id, e)
 
-            logger.info(f"Extracted info for {access_id}: {title}")
+            self.logger.info(f"Extracted info for {access_id}: {title}")
             
             # Pydantic 모델로 반환
             return ElectronicResourceInfo(
@@ -497,7 +500,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
             )
             
         except Exception as e:
-            logger.warning(f"Failed to get detailed info for {access_id}: {e}")
+            self.logger.warning(f"Failed to get detailed info for {access_id}: {e}")
             # 에러 발생 시 기본값으로 모델 반환
             return ElectronicResourceInfo(
                 access_id=access_id,

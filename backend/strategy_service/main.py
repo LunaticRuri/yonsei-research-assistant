@@ -1,7 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
-from openai import OpenAI
-from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 
 from shared.models import (
@@ -15,8 +12,10 @@ from shared.models import (
 from shared.config import settings
 
 import logging
-logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
+logger.addHandler(settings.console_handler)
+logger.addHandler(settings.file_handler)
+    
 
 # --- Import Modules ---
 # [1] 검색어 생성기 (Factory Pattern)
@@ -68,7 +67,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
     keywords_str = keywords_result['keywords']
     latency = keywords_result['latency_ms']
     
-    logger.info(f"질문 {request.query} -> 생성된 키워드: {keywords_str} ({latency}ms)")
+    logger.info(f"Question: {request.query} -> Keywords Generated: {keywords_str} ({latency}ms)")
 
     # (문자열 결과를 리스트로 변환: 쉼표 기준 파싱)
     if isinstance(keywords_str, str):
@@ -84,7 +83,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
         keywords=keyword_list
     )
     routing_decision = await routing_service.determine_routing(routing_request)
-    logger.info(f"라우팅 결정: {routing_decision.routes}")
+    logger.info(f"Routing -> {routing_decision.routes}")
 
     # STEP 3: Construct SearchRequest
 
@@ -132,6 +131,8 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
         user_query=request.query
     )
     
+    logger.debug(f"Constructed SearchRequest: {search_request}")
+
     # 최종 SearchRequest 반환
     return search_request
 

@@ -9,8 +9,8 @@ from pydantic import Field
 from shared.models import LibraryHoldingInfo, LibrarySearchField, HoldingsMaterialType
 from retrieval_service.scrapers.base_scraper import BaseLibraryScraper
 from retrieval_service.scrapers.search_params import BaseSearchParams, AdditionalQuery, YearRange
+from shared.config import settings
 
-logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -122,6 +122,10 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
         self.user_id = user_id
         self.user_pw = user_pw
         self.is_logged_in = False
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     async def __aenter__(self):
         """
@@ -135,7 +139,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
         if self.user_id and self.user_pw:
             success = await self.perform_login(self.user_id, self.user_pw)
             if not success:
-                logger.error("Auto-login failed during initialization.")
+                self.logger.error("Auto-login failed during initialization.")
                 raise Exception("Login Failed") # 로그인이 필수라면 여기서 에러를 발생시켜서 진행을 막을 수 있음
             else:
                 self.is_logged_in = True
@@ -201,7 +205,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
             # 검색 URL 구성 (첫 페이지)
             search_url = self._build_holdings_search_url(params, page=1)
             
-            logger.info(f"Executing holdings search: {search_url}")
+            self.logger.info(f"Executing holdings search: {search_url}")
             
             # 검색 요청
             async with session.get(search_url, timeout=30) as response:
@@ -218,9 +222,9 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                 params=params  # 페이징을 위한 파라미터 전달
             )
             
-            logger.info(f"Final result count: {len(search_results)} (requested: {max_results})")
+            self.logger.info(f"Final result count: {len(search_results)} (requested: {max_results})")
             
-            logger.debug(search_results)
+            self.logger.debug(search_results)
         
             # 각 결과에 대해 상세 정보 수집
             detailed_results = []
@@ -233,13 +237,13 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                     await asyncio.sleep(self.request_delay)
                     
                 except Exception as e:
-                    logger.warning(f"Failed to get detailed info for {result.get('title', 'Unknown')}: {e}")
+                    self.logger.warning(f"Failed to get detailed info for {result.get('title', 'Unknown')}: {e}")
                     detailed_results.append(result)
             
             return detailed_results
             
         except Exception as e:
-            logger.error(f"Library search failed: {e}")
+            self.logger.error(f"Library search failed: {e}")
             raise
     
     def _build_holdings_search_url(self, params: LibraryHoldingsSearchParams, page: int = 1) -> str:
@@ -379,23 +383,23 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                     try:
                         # "총 271건 중 271건 출력"에서 두 번째 숫자 추출
                         total_results_available = int(search_cnt_list[1].get_text(strip=True).replace(',',''))
-                        logger.info(f"Total results available: {total_results_available}")
+                        self.logger.info(f"Total results available: {total_results_available}")
                         
                         # 실제 가져올 수 있는 결과 수로 max_result 조정
                         if total_results_available < max_result:
-                            logger.info(f"Adjusting max_result from {max_result} to {total_results_available}")
+                            self.logger.info(f"Adjusting max_result from {max_result} to {total_results_available}")
                             max_result = total_results_available
                     except (ValueError, AttributeError) as e:
-                        logger.warning(f"Failed to parse total result count: {e}")
+                        self.logger.warning(f"Failed to parse total result count: {e}")
             
             # 검색 결과 항목 찾기 - <li class="items"> 선택
             result_items = soup.select('ul.resultList li.items')
             
-            logger.info(f"Found {len(result_items)} result items on page {current_page}")
+            self.logger.info(f"Found {len(result_items)} result items on page {current_page}")
             
             # 현재 페이지에 결과가 없으면 중단
             if not result_items:
-                logger.info(f"No more results found on page {current_page}")
+                self.logger.info(f"No more results found on page {current_page}")
                 break
             
             # 현재 페이지의 결과 수집
@@ -413,7 +417,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                         if checkbox:
                             access_id = checkbox.get('value', '')
                         else:
-                            logger.warning(f"Could not find access ID for item")
+                            self.logger.warning(f"Could not find access ID for item")
                             continue
                     
                     results.append(access_id)
@@ -421,14 +425,14 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                         
                     # max_result 제한 체크
                     if len(results) >= max_result:
-                        logger.info(f"Reached max_result limit: {max_result}")
+                        self.logger.info(f"Reached max_result limit: {max_result}")
                         break
                             
                 except Exception as e:
-                    logger.warning(f"Failed to parse result item: {e}")
+                    self.logger.warning(f"Failed to parse result item: {e}")
                     continue
             
-            logger.info(f"Collected {page_results_count} results from page {current_page}. Total: {len(results)}/{max_result}")
+            self.logger.info(f"Collected {page_results_count} results from page {current_page}. Total: {len(results)}/{max_result}")
             
             # max_result에 도달했거나 params가 없으면 중단
             if len(results) >= max_result or params is None:
@@ -438,7 +442,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
             current_page += 1
             next_url = self._build_holdings_search_url(params, page=current_page)
             
-            logger.info(f"Fetching next page {current_page}: {next_url}")
+            self.logger.info(f"Fetching next page {current_page}: {next_url}")
             
             try:
                 # 윤리적 지연
@@ -450,7 +454,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                     current_html = await response.text()
                 
             except Exception as e:
-                logger.error(f"Failed to fetch page {current_page}: {e}")
+                self.logger.error(f"Failed to fetch page {current_page}: {e}")
                 break
         
         return results
@@ -513,9 +517,9 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                             year = self._extract_year(field_value)
                             if year and year > 0:
                                 publication_year = year
-                                logger.debug(f"Found publication year for {access_id}: {year}")
+                                self.logger.debug(f"Found publication year for {access_id}: {year}")
                         except Exception as e:
-                            logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
+                            self.logger.debug(f"Failed to extract year from publication_info for {access_id}: {e}")
                     
                     # ISBN 추출
                     elif field_name == "ISBN":
@@ -557,7 +561,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
                         unique_descriptions.append(desc)
                 book_description = "\n\n".join(unique_descriptions)
             
-            logger.info(f"Extracted info for {access_id}: {title}")
+            self.logger.info(f"Extracted info for {access_id}: {title}")
             
             # Pydantic 모델로 반환
             return LibraryHoldingInfo(
@@ -573,7 +577,7 @@ class LibraryHoldingsScraper(BaseLibraryScraper):
             )
             
         except Exception as e:
-            logger.warning(f"Failed to get detailed info for {access_id}: {e}")
+            self.logger.warning(f"Failed to get detailed info for {access_id}: {e}")
             # 에러 발생 시 기본값으로 모델 반환
             return LibraryHoldingInfo(
                 access_id=access_id,

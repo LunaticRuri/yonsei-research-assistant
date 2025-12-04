@@ -17,12 +17,16 @@ from shared.models import StrategyServiceMode
 from shared.config import settings
 
 import logging
-logger = logging.getLogger(__name__)
+
 
 class QueryTranslationService:
     def __init__(self, adapter_path: str = None):
         print("[Init] QueryTranslationService (Factory Mode) 초기화...")
         
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
+
         # 1. API 핸들러 등록 (확장성 포인트!)
         self.api_providers = {
             "openai": OpenAIHandler(settings.OPENAI_API_KEY),
@@ -48,7 +52,7 @@ class QueryTranslationService:
         if adapter_path and os.path.exists(adapter_path):
             try:
                 base_model_id = "paust/pko-chat-t5-large"
-                logging.info(f"🔄 LoRA 모델 로드 시도: {adapter_path}")
+                self.logger.info(f"🔄 LoRA 모델 로드 시도: {adapter_path}")
                 self.tokenizer = AutoTokenizer.from_pretrained(base_model_id)
                 base_model = AutoModelForSeq2SeqLM.from_pretrained(
                     base_model_id, 
@@ -57,11 +61,11 @@ class QueryTranslationService:
                 )
                 self.lora_model = PeftModel.from_pretrained(base_model, adapter_path)
                 self.lora_model.eval()
-                logging.info("✅ LoRA 모델 로드 완료!")
+                self.logger.info("✅ LoRA 모델 로드 완료!")
             except Exception as e:
-                logging.error(f"❌ LoRA 로드 실패: {e}")
+                self.logger.error(f"❌ LoRA 로드 실패: {e}")
         else:
-            logging.warning(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
+            self.logger.warning(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
 
     async def _generate_by_lora(self, query):
         
@@ -93,7 +97,7 @@ class QueryTranslationService:
             
             # 3. 지원하지 않는 모드
             else:
-                logger.error(f"지원하지 않는 모드: {mode} -> 기본값 반환")
+                self.logger.error(f"지원하지 않는 모드: {mode} -> 기본값 반환")
                 raise ValueError("Unsupported mode")
             
             return {
@@ -103,7 +107,7 @@ class QueryTranslationService:
                 "latency_ms": round((time.time() - start_time) * 1000, 2)
             }
         except Exception as e:
-            logger.error(f"키워드 생성 실패: {e}, 모드: {mode} -> 기본값 반환")
+            self.logger.error(f"키워드 생성 실패: {e}, 모드: {mode} -> 기본값 반환")
             return {
                 "query": query, 
                 "mode": mode, 

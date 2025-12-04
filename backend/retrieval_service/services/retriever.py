@@ -8,6 +8,7 @@ from retrieval_service.adapters.electronic_resources_adapter import ElectronicRe
 from retrieval_service.adapters.vectordb_adapter import VectorDBAdapter
 
 from shared.models import Document, SearchRequest, RetrievalRoute
+from shared.config import settings
 
 
 
@@ -22,6 +23,8 @@ class RetrieverService:
             RetrievalRoute.VECTOR_DB: VectorDBAdapter()
         }
         self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     async def retrieve_all(self, request: SearchRequest) -> List[Document]:
         """

@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 
 from retrieval_service.config import retrieval_settings
-from shared.models import Document, RankedDocument
+from shared.models import RetrievalRoute, Document, RankedDocument
 
 class RankerService:
     """여러 소스의 검색 결과를 융합하고 재순위화"""
@@ -187,8 +187,9 @@ class RankerService:
         가중치 기반 융합 (소스별 신뢰도 반영)
         """
         weights = weights or {
-            'vector_db': 0.6,
-            'yonsei_library': 0.4
+            RetrievalRoute.YONSEI_ELECTRONICS.value: 0.5,
+            RetrievalRoute.VECTOR_DB.value:  0.3,
+            RetrievalRoute.YONSEI_HOLDINGS.value: 0.2
         }
         
         for doc in documents:

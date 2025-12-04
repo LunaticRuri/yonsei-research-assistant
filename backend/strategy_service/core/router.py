@@ -3,8 +3,6 @@ from shared.config import settings
 from shared.models import RoutingRequest, RoutingDecision
 
 import logging
-logger = logging.getLogger(__name__)
-
 
 LOGICAL_ROUTING_PROMPT = """
 당신은 사용자의 질문과 이에 대한 검색 키워드를 분석하여 검색 경로를 결정하는 전문가이다.
@@ -34,6 +32,10 @@ class RoutingService:
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.model = settings.GEMINI_FLASH_MODEL
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
+
     async def determine_routing(self, request: RoutingRequest) -> RoutingDecision:
 
         prompt = LOGICAL_ROUTING_PROMPT.format(
@@ -51,7 +53,7 @@ class RoutingService:
                 }
             )
         except Exception as e:
-            logger.error(f"라우팅 결정 실패: {e}")
+            self.logger.error(f"Routing failed: {e}")
             return RoutingDecision(
                 routes=["vector_book_db", "yonsei_holdings", "yonsei_electronics"],
                 reason="라우팅 결정 실패로 인한 기본값 반환"

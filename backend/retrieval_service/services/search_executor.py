@@ -15,7 +15,7 @@ class SearchExecutor:
         self.retriever = RetrieverService()
         self.ranker = RankerService()
         self.refiner = RefinerService()
-        
+
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
@@ -94,6 +94,9 @@ class SearchExecutor:
             metadata=metadata,
             needs_requestioning=needs_requestioning
         )
+
+        final_result_debug_str = '\n'.join(f"[{doc.rank}]\n{doc.metadata}" for doc in filtered_documents)
+        self.logger.debug(f"Retrieval Result: {final_result_debug_str}")
 
         return GenerationRequest(
             query=request.user_query,
