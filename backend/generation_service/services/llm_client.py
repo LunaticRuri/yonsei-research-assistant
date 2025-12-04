@@ -10,7 +10,7 @@ from generation_service.prompts import (
 
 import logging
 
-logger = logging.getLogger(__name__)
+
 
 class LLMClient:
     """Gemini Client for Generation Service"""
@@ -18,10 +18,14 @@ class LLMClient:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.flash_model_name = settings.GEMINI_FLASH_MODEL # self-rag에 사용
-        self.pro_model_name = settings.GEMINI_PRO_MODEL # 최종 답변 생성에 사용
+        self.pro_model_name = settings.GEMINI_PRO_MODEL # 최종 답변 생성에 사용 (응답 속도가 느려서 일단 제외)
 
         # NOTE: Self-RAG 평가 기준 점수 조절 가능
         self.pass_threshold = 3  # Self-RAG 평가 통과 기준 점수
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
         
     async def generate_self_rag_response(
         self,
@@ -79,7 +83,7 @@ class LLMClient:
                 return False
             
         except Exception as e:
-            logger.error(f"Gemini API call failed: {e}")
+            self.logger.error(f"Gemini API call failed: {e}")
             raise
     
     async def generate_final_response(
@@ -90,14 +94,14 @@ class LLMClient:
         """Generate final response from Gemini Pro model"""
         try:
             response = await self.client.aio.models.generate_content(
-                model=self.pro_model_name,
+                model=self.flash_model_name,
                 contents=FINAL_GENERATION_PROMPT_TEMPLATE.format(
-                    query=query_text,
+                    query_text=query_text,
                     documents_text=documents_text
                 )
             )
             return response.text
             
         except Exception as e:
-            logger.error(f"Gemini Pro API call failed: {e}")
+            self.logger.error(f"Gemini Pro API call failed: {e}")
             raise

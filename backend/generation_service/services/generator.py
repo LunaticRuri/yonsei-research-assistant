@@ -6,13 +6,18 @@ from shared.models import (
     GenerationResult
 )
 from generation_service.services.llm_client import LLMClient
+from shared.config import settings
 import logging
 
-logger = logging.getLogger(__name__)
+
 
 class GeneratorService:
     def __init__(self):
         self.llm_client = LLMClient()
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
 
     def _format_documents(self, documents: list[RankedDocument]) -> str:
         formatted_docs = []
@@ -31,7 +36,11 @@ class GeneratorService:
         """
         Generate a response without Self-RAG evaluation.
         """
+        
+        self.logger.info("Generating response without Self-RAG evaluation.")
+
         if retrieval_result.needs_requestioning:
+            self.logger.info("Requestioning needed as per retrieval result. (CRAG) Aborting generation.")
             return GenerationResult(
                 answer="질문을 다시 작성해 주세요. (CRAG 단계에서 재질문 필요하다고 판단함)",
                 result_type=GenerationResultType.REQUESTIONING,
@@ -42,6 +51,7 @@ class GeneratorService:
         documents = retrieval_result.documents
         
         if not documents:
+            self.logger.info("No documents retrieved. Aborting generation.")
             return GenerationResult(
                 answer="죄송합니다. 관련 문서를 찾을 수 없어 답변을 생성할 수 없습니다. (문서 검색 결과 없음)",
                 result_type=GenerationResultType.NO_DOCUMENTS,
@@ -56,7 +66,8 @@ class GeneratorService:
                 query_text=query,
                 documents_text=documents_text
             )
-            
+            self.logger.info("Generation without Self-RAG completed successfully.")
+            self.logger.debug(f"Generated Answer: {final_answer}")
             return GenerationResult(
                 answer=final_answer,
                 result_type=GenerationResultType.ANSWER,
@@ -65,7 +76,7 @@ class GeneratorService:
             )
         
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            self.logger.error(f"Generation failed: {e}")
             return GenerationResult(
                 answer="답변 생성 중 오류가 발생했습니다.",
                 result_type=GenerationResultType.ERROR,
@@ -77,9 +88,11 @@ class GeneratorService:
         """
         Generate a response using Self-RAG approach.
         """
+        self.logger.info("Generating response with Self-RAG evaluation.")
 
         # TODO: CLI Interface와 함께 생각해서 재질문 요청 구현 필요
         if retrieval_result.needs_requestioning:
+            self.logger.info("Requestioning needed as per retrieval result. (CRAG) Aborting generation.")
             return GenerationResult(
                 answer="질문을 다시 작성해 주세요. (CRAG 단계에서 재질문 필요하다고 판단함)",
                 result_type=GenerationResultType.REQUESTIONING,
@@ -90,6 +103,7 @@ class GeneratorService:
         documents = retrieval_result.documents
         
         if not documents:
+            self.logger.info("No documents retrieved. Aborting generation.")
             return GenerationResult(
                 answer="죄송합니다. 관련 문서를 찾을 수 없어 답변을 생성할 수 없습니다. (문서 검색 결과 없음)",
                 result_type=GenerationResultType.NO_DOCUMENTS,
@@ -101,12 +115,13 @@ class GeneratorService:
         try: 
             # SELF_RAG 평가
             # STEP 1: 관련성 평가
-            is_relevant = self.llm_client.generate_self_rag_response(
+            is_relevant = await self.llm_client.generate_self_rag_response(
                 query_text=query,
                 documents_text=documents_text,
                 prompt_type=SelfRAGPromptType.RELEVANCE_CHECK
             )
             if not is_relevant:
+                self.logger.info("Documents deemed irrelevant by Self-RAG. Aborting generation.")
                 return GenerationResult(
                     answer="죄송합니다. 제공된 문서들이 질문과 관련이 없어 답변을 생성할 수 없습니다. (Self-RAG 관련성 평가 실패)",
                     result_type=GenerationResultType.NO_DOCUMENTS,
@@ -134,6 +149,7 @@ class GeneratorService:
                     break
                 # NOTE: 환각으로 판단되면 답변 재생성, 최대 2회까지 재시도
                 if not is_accurate and correction_loop_counter > 2:
+                    self.logger.info("Generated answer deemed hallucinatory by Self-RAG after multiple attempts. Aborting generation.")
                     return GenerationResult(
                         answer= f"죄송합니다. 생성된 답변이 정확하지 않아 제공할 수 없습니다. (Self-RAG 환각 평가 실패, {correction_loop_counter}회 재생성 시도)",
                         result_type=GenerationResultType.REQUESTIONING,
@@ -148,6 +164,7 @@ class GeneratorService:
                 prompt_type=SelfRAGPromptType.HELPFULNESS_CHECK
             )
             if not is_useful:
+                self.logger.info("Generated answer deemed unhelpful by Self-RAG. Aborting generation.")
                 return GenerationResult(
                     answer="죄송합니다. 생성된 답변이 유용하지 않아 제공할 수 없습니다. (Self-RAG 유용성 평가 실패)",
                     result_type=GenerationResultType.REQUESTIONING,
@@ -157,7 +174,8 @@ class GeneratorService:
             
             # STEP 5: 최종 답변 반환
             final_answer = tmp_final_answer
-
+            self.logger.info("Generation with Self-RAG completed successfully.")
+            self.logger.debug(f"Generated Answer: {final_answer}")
             return GenerationResult(
                 answer=final_answer,
                 result_type=GenerationResultType.ANSWER,
@@ -166,7 +184,7 @@ class GeneratorService:
             )
             
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            self.logger.error(f"Generation failed: {e}")
             return GenerationResult(
                 answer="답변 생성 중 오류가 발생했습니다.",
                 result_type=GenerationResultType.ERROR,

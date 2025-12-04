@@ -5,7 +5,7 @@ from sentence_transformers import CrossEncoder
 import logging
 from collections import defaultdict
 
-from retrieval_service.config import settings
+from retrieval_service.config import retrieval_settings
 from shared.models import Document, RankedDocument
 
 class RankerService:
@@ -13,7 +13,7 @@ class RankerService:
     
     def __init__(self):
         # Cross-encoder 모델 로드 (semantic reranking용)
-        self.reranker = CrossEncoder(settings.RERANK_MODEL)
+        self.reranker = CrossEncoder(retrieval_settings.RERANK_MODEL)
         self.logger = logging.getLogger(__name__)
     
     def tmp_rerank_and_fuse(
@@ -34,6 +34,9 @@ class RankerService:
         Returns:
             최종 순위가 매겨진 문서 (top_k개)
         """
+        
+        self.logger.warning("Using temporary rerank_and_fuse method: random shuffle")
+        
         # 1. 중복 제거 (동일 content 기준)
         unique_docs = self._deduplicate(documents)
         self.logger.info(f"Deduplicated: {len(documents)} -> {len(unique_docs)}")
@@ -42,11 +45,12 @@ class RankerService:
         random.shuffle(unique_docs)
         
         # 3. Top-K 필터링 및 순위 부여
-        final_docs = unique_docs[:settings.RERANK_TOP_K]
+        final_docs = unique_docs[:retrieval_settings.RERANK_TOP_K]
         for rank, doc in enumerate(final_docs, start=1):
             doc.rank = rank
         
         self.logger.info(f"Final ranked documents: {len(final_docs)}")
+        
         return final_docs
 
     async def rerank_and_fuse(
@@ -66,8 +70,10 @@ class RankerService:
         Returns:
             최종 순위가 매겨진 문서 (top_k개)
         """
-        method = method or settings.FUSION_METHOD
         
+        method = method or retrieval_settings.FUSION_METHOD
+        self.logger.info(f"Rerank and fuse method: {method}")
+
         # 1. 중복 제거 (동일 content 기준)
         unique_docs = self._deduplicate(documents)
         self.logger.info(f"Deduplicated: {len(documents)} -> {len(unique_docs)}")
@@ -85,7 +91,7 @@ class RankerService:
         
         # 4. Top-K 필터링 및 순위 부여 
         # TODO: top_k 설정 재검토 필요
-        final_docs = final_docs[:settings.RERANK_TOP_K]
+        final_docs = final_docs[:retrieval_settings.RERANK_TOP_K]
         for rank, doc in enumerate(final_docs, start=1):
             doc.rank = rank
         

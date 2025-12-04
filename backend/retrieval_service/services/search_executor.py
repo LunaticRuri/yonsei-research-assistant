@@ -1,6 +1,6 @@
 import logging
 import time
-
+from shared.config import settings
 from shared.models import SearchRequest, RetrievalResult, GenerationRequest
 from retrieval_service.services.retriever import RetrieverService
 from retrieval_service.services.ranker import RankerService
@@ -15,7 +15,10 @@ class SearchExecutor:
         self.retriever = RetrieverService()
         self.ranker = RankerService()
         self.refiner = RefinerService()
+        
         self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     async def execute(self, request: SearchRequest) -> RetrievalResult:
         """
@@ -40,6 +43,8 @@ class SearchExecutor:
                 needs_requestioning=True
             )
         
+        self.logger.debug(f"Retrieved documents: {'\n'.join(raw_documents)}")
+
         # Step 2: Rerank + Fusion
         self.logger.info(f"Reranking {len(raw_documents)} documents")
         ranked_documents = await self.ranker.rerank_and_fuse(

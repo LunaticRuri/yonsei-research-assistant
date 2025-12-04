@@ -8,7 +8,7 @@ import logging
 
 from retrieval_service.adapters.base_adapters import BaseRetriever
 from retrieval_service.scrapers.search_params import VectorSearchParams
-from retrieval_service.config import settings
+from retrieval_service.config import retrieval_settings
 from shared.models import Document, SearchRequest, QueryOperator, RetrievalRoute
 
 
@@ -24,12 +24,12 @@ class VectorDBAdapter(BaseRetriever):
         self.sqlite_connection = None
 
         try:
-            self.index = faiss.read_index(settings.FAISS_INDEX_PATH)
+            self.index = faiss.read_index(retrieval_settings.FAISS_INDEX_PATH)
             
-            with open(settings.FAISS_ID_TO_METADATA_PATH, 'rb') as f:
+            with open(retrieval_settings.FAISS_ID_TO_METADATA_PATH, 'rb') as f:
                 self.metadata_faiss_map = pickle.load(f)
             
-            self.sqlite_connection = sqlite3.connect(settings.METADATA_DB_PATH)
+            self.sqlite_connection = sqlite3.connect(retrieval_settings.METADATA_DB_PATH)
 
         except FileNotFoundError:
             logging.warning("FAISS ID to Metadata 매핑 파일을 찾을 수 없습니다. 메타데이터 조회가 불가능합니다.")
@@ -38,7 +38,7 @@ class VectorDBAdapter(BaseRetriever):
             logging.error(f"FAISS 인덱스 로드 중 오류 발생: {e}")
             self.is_faiss_initialized = False
         
-        self.encoder = SentenceTransformer(settings.VECTOR_EMBEDDING_MODEL)
+        self.encoder = SentenceTransformer(retrieval_settings.VECTOR_EMBEDDING_MODEL)
         self.logger = logging.getLogger(__name__)
     
     async def request_to_search_params(self, request: SearchRequest) -> VectorSearchParams:

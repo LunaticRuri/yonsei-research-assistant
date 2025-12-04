@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from shared.models import GenerationRequest, GenerationResult
 from generation_service.services.generator import GeneratorService
+from shared.config import settings
 import logging
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.addHandler(settings.console_handler)
+logger.addHandler(settings.file_handler)
 
 app = FastAPI(title="Generation Service", version="1.0.0")
 

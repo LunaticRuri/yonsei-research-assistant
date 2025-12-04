@@ -3,16 +3,19 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from shared.models import SearchRequest, GenerationRequest
 from retrieval_service.services.search_executor import SearchExecutor
+from shared.config import settings
 import logging
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.addHandler(settings.console_handler)
+logger.addHandler(settings.file_handler)
 
 app = FastAPI(title="Retrieval Service", version="1.0.0")
 
 service = SearchExecutor()
 
+# Debugging: 요청 유효성 검사 오류 처리기
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     logger.error(f"Validation error: {exc.errors()}")
@@ -21,10 +24,6 @@ async def validation_exception_handler(request, exc):
         status_code=422,
         content={"detail": exc.errors(), "body": exc.body},
     )
-
-async def global_exception_handler(request, exc):
-    logger.error(f"Unhandled exception: {exc}")
-    return HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/health")
 async def health_check():

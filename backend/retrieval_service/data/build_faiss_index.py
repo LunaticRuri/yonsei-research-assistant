@@ -4,18 +4,18 @@ import faiss
 import pickle
 import os
 
-from retrieval_service.config import settings
+from retrieval_service.config import retrieval_settings
 
 # Embeddings Database Paths
-EMBEDDINGS_DATABASE_PATH = settings.EMBEDDINGS_DB_PATH
+EMBEDDINGS_DATABASE_PATH = retrieval_settings.EMBEDDINGS_DB_PATH
 
 # Metadata Database Paths
-METADATA_DATABASE_PATH = settings.METADATA_DB_PATH
+METADATA_DATABASE_PATH = retrieval_settings.METADATA_DB_PATH
 
 # FAISS Index Paths
-FAISS_INDEX_PATH = settings.FAISS_INDEX_PATH
-FAISS_ID_TO_METADATA_PATH = settings.FAISS_ID_TO_METADATA_PATH
-VECTOR_DIMENSION = settings.VECTOR_DIMENSION
+FAISS_INDEX_PATH = retrieval_settings.FAISS_INDEX_PATH
+FAISS_ID_TO_METADATA_PATH = retrieval_settings.FAISS_ID_TO_METADATA_PATH
+VECTOR_DIMENSION = retrieval_settings.VECTOR_DIMENSION
 
 # 배치 처리 설정
 BATCH_SIZE = 100000  # 한 번에 처리할 레코드 수

@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -42,8 +43,28 @@ class Settings(BaseSettings):
     RETRIEVAL_SERVICE_URL: str = "http://localhost:8003"
     GENERATION_SERVICE_URL: str = "http://localhost:8004"
     
-    # 로깅 설정
+    # 로깅 설정2
+    # 원하는 형식 문자열 정의
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - (%(filename)s:%(lineno)d) - %(message)s'
+    logger_formatter = logging.Formatter(LOG_FORMAT)
     LOG_LEVEL: str = "INFO"
+    
+    # 콘솔 핸들러 생성
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.ERROR) 
+    console_handler.setFormatter(logger_formatter)
+
+    # 7. 파일 핸들러 생성
+    file_handler = logging.FileHandler(os.getenv("LOGFILE_PATH", "service.log"))
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logger_formatter)
+
+    """
+    logger 설정 예시
+    self.logger = logging.getLogger(__name__)
+    self.logger.addHandler(settings.console_handler)
+    self.logger.addHandler(settings.file_handler)
+    """
     
     class Config:
         env_file = ".env"

@@ -188,7 +188,7 @@ class ResearchAssistantCLI:
                 return
 
             # 검색 결과 요약 출력
-            results = generation_request.get("retrieval_result", [])
+            results = generation_request.get("retrieval_result", []).get("documents", [])
             await self.print(f"   ✅ {len(results)}건의 문서를 찾았습니다.")
 
             # 3. Generation Service (답변 생성)

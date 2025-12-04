@@ -3,7 +3,7 @@ from typing import List
 import logging
 
 from retrieval_service.adapters.base_adapters import BaseRetriever
-from retrieval_service.config import settings
+from retrieval_service.config import retrieval_settings
 from retrieval_service.scrapers.electronic_resources_scraper import ElectronicResourcesScraper, ElectronicSearchParams
 from shared.models import (
     RetrievalRoute,
@@ -20,8 +20,8 @@ class ElectronicResourcesAdapter(BaseRetriever):
     
     def __init__(self):
         self.scraper = ElectronicResourcesScraper(
-            user_id=settings.YONSEI_ID,
-            user_pw=settings.YONSEI_PW
+            user_id=retrieval_settings.YONSEI_ID,
+            user_pw=retrieval_settings.YONSEI_PW
         )
         self.logger = logging.getLogger(__name__)
         # NOTE: num_workers는 1로 해야 비동기 지원됨
