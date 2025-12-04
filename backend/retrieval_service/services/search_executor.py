@@ -21,7 +21,7 @@ class SearchExecutor:
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
     
-    async def execute(self, request: SearchRequest) -> RetrievalResult:
+    async def execute(self, request: SearchRequest) -> GenerationRequest:
         """
         전체 Retrieval 파이프라인 실행
         
@@ -38,11 +38,16 @@ class SearchExecutor:
         
         if not raw_documents:
             self.logger.warning("No documents retrieved")
-            return RetrievalResult(
+            error_retrieval_result = RetrievalResult(
                 documents=[],
                 metadata={'error': 'No documents found'},
                 needs_requestioning=True
             )
+            return GenerationRequest(
+                query=request.user_query,
+                retrieval_result=error_retrieval_result
+            )
+    
         raw_docs_str = '\n'.join(str(doc) for doc in raw_documents)
         self.logger.debug(f"Retrieved documents: {raw_docs_str})")
 

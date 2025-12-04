@@ -77,25 +77,25 @@ class QueryTranslationService:
             return f"[Mock] '{query}'에 대한 로컬 키워드 (모델 미연결)"
 
         def text_cleaning(text):
-          if not isinstance(text, str):
-            return ""
+            if not isinstance(text, str):
+                return ""
 
-          text = text.replace('\n', ' ')
-          text = re.sub(r'[^가-힣a-zA-Z0-9 :,]', ',', text)
+            text = text.replace('\n', ' ')
+            text = re.sub(r'[^가-힣a-zA-Z0-9 :,]', ',', text)
+            if ":" in text:
+                first, rest = text.split(":", 1)
+                rest = rest.replace(":", ",")
+                text = first + ":" + rest
 
-          first, rest = text.split(":", 1)
-          rest = rest.replace(":", ",")
-          text = first + ":" + rest
+            no_words=['혹은', '및',' 등', '또는', '에 대한', '에 대해', '에 관한', '에 관해', '관련']
+            for word in no_words:
+                text = text.replace(word, ',')
+            
+            text = re.sub(r'\s*,+\s*', ',', text)
+            text = re.sub(r'(?<![가-힣A-Za-z0-9]),|,(?![가-힣A-Za-z0-9])', '', text)
+            text = text.strip()
 
-          no_words=['혹은', '및',' 등', '또는', '에 대한', '에 대해', '에 관한', '에 관해', '관련']
-          for word in no_words:
-            text = text.replace(word, ',')
-          
-          text = re.sub(r'\s*,+\s*', ',', text)
-          text = re.sub(r'(?<![가-힣A-Za-z0-9]),|,(?![가-힣A-Za-z0-9])', '', text)
-          text = text.strip()
-
-          return text
+            return text
         
         def run_inference():
             input_text = ChatPromptTemplate.from_messages(
@@ -120,7 +120,12 @@ class QueryTranslationService:
 
         decode = await asyncio.to_thread(run_inference)
         
-        return text_cleaning(decode)
+        self.logger.debug(f"LoRA 생성 결과 (전처리 전): {decode}")
+
+        processed_output = text_cleaning(decode)
+
+        self.logger.debug(f"LoRA 생성 결과 (전처리 후): {processed_output}")
+        return processed_output
 
     async def generate_keywords(self, query, mode: StrategyServiceMode):
         start_time = time.time()

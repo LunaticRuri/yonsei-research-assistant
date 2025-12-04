@@ -23,6 +23,10 @@ class ResearchAssistantCLI:
         self.reader = reader
         self.writer = writer
 
+        # 키워드 생성 모델 설정
+        # self.keywords_generate_model = "gemini"
+        self.keywords_generate_model = "lora"
+
     async def print(self, message: str = ""):
         """클라이언트에게 메시지 전송"""
         try:
@@ -81,7 +85,9 @@ class ResearchAssistantCLI:
             await self.print("연구 주제나 궁금한 것에 대해 자유롭게 이야기해 주세요.")
             await self.print("명령어 도움말이 필요하시면 '!help'를 입력하세요.")
             await self.print("검색을 시작하려면 '!search [검색 질문]'를 입력하세요.")
+            await self.print("프로그램을 종료하려면 '!exit' 또는 '!q', '!quit'를 입력하세요.")
             await self.print("또는 대화 중 검색 의도가 파악되면 자동으로 진행됩니다. (기능 구현 중!)")
+            await self.print(f"현재 설정된 키워드 모델: {self.keywords_generate_model}")
             await self.print("-" * 50)
 
             while True:
@@ -131,7 +137,9 @@ class ResearchAssistantCLI:
                     # FIXME: 대화 중 검색 의도가 파악되면 자동으로 검색 모드로 전환하는 기능 구현 필요
                     # await self.process_dialogue(user_input)
 
-                except ConnectionResetError:
+                except ConnectionError:
+                    # ConnectionResetError, BrokenPipeError, ConnectionAbortedError 등을 모두 포함
+                    print("클라이언트와의 연결이 종료되었습니다.")
                     break
                 except Exception as e:
                     await self.print(f"\n[Error] {e}")
@@ -198,7 +206,7 @@ class ResearchAssistantCLI:
             # NOTE: 여기서 'gemini' or 'Lora' 모드 선택 가능
             strategy_payload = {
                 "query": query,
-                "mode": "gemini" # 또는 'lora' 등 설정 가능
+                "mode": self.keywords_generate_model
             }
             async with self.loading_indicator():
                 strategy_response = await self.client.post(
@@ -212,7 +220,7 @@ class ResearchAssistantCLI:
             await self.print(f"       - 라우팅 경로: {search_request.get('routes','')}")
 
             # 2. Retrieval Service (검색 수행)
-            await self.print_raw("   ... 데이터 검색 실행 중")
+            await self.print_raw("   ... 데이터 검색 실행 중(CPU라 Re-rank 시간이 다소 소요될 수 있습니다)")
             async with self.loading_indicator():
                 retrieval_response = await self.client.post(
                     f"{SERVICES['retrieval']}/search",
@@ -227,7 +235,7 @@ class ResearchAssistantCLI:
 
             # 검색 결과 요약 출력
             try:
-                generation_request_model = GenerationRequest.model_validate_json(generation_request)
+                generation_request_model = GenerationRequest(**generation_request)
                 documents = generation_request_model.retrieval_result.documents
                 
                 documents.sort(key=lambda doc: doc.rank) # 랭크 순 정렬
@@ -235,7 +243,7 @@ class ResearchAssistantCLI:
                 await self.print(f"   ✅ 검색 결과 {len(documents)}건 수집 완료. 주요 내용 요약:")
                 
                 for doc in documents:
-                    await self.print(f"       - [Rank {doc.rank}] {doc.metadata}...")                
+                    await self.print(f"       - [Rank {doc.rank}] {doc.metadata.get('title','')}...")                
                 
             except Exception as e:
                 await self.print(f"   ⚠️ 검색 결과 요약 중 오류 발생: {e}")

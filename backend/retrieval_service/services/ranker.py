@@ -125,6 +125,8 @@ class RankerService:
     ) -> List[RankedDocument]:
         """Cross-encoder로 쿼리-문서 관련성 재평가"""
         
+        self.logger.info("Starting cross-encoder reranking...")
+        
         if not documents:
             return []
 
