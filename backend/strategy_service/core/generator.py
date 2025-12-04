@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+import asyncio
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 
@@ -63,15 +64,19 @@ class QueryTranslationService:
             logging.warning(f"⚠️ 모델 경로 없음({adapter_path}). LoRA는 [Mock] 모드로 동작합니다.")
 
     async def _generate_by_lora(self, query):
+        
         if self.lora_model is None:
-            time.sleep(0.5) 
+            await asyncio.sleep(0.5) 
             return f"[Mock] '{query}'에 대한 로컬 키워드 (모델 미연결)"
-            
-        input_text = f"### 질문:\n{query}\n### 핵심 검색어 목록:"
-        inputs = self.tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True).to(self.device)
-        with torch.no_grad():
-            outputs = self.lora_model.generate(**inputs, max_new_tokens=128)
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        def run_inference():
+            input_text = f"### 질문:\n{query}\n### 핵심 검색어 목록:"
+            inputs = self.tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True).to(self.device)
+            with torch.no_grad():
+                outputs = self.lora_model.generate(**inputs, max_new_tokens=128)
+            return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        return await asyncio.to_thread(run_inference)
 
     async def generate_keywords(self, query, mode: StrategyServiceMode):
         start_time = time.time()
@@ -79,7 +84,7 @@ class QueryTranslationService:
         try:
             # 1. LoRA 모드
             if mode == "lora":
-                result = self._generate_by_lora(query)
+                result = await self._generate_by_lora(query)
             
             # 2. API 모드 (동적 선택)
             elif mode in self.api_providers:

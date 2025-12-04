@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from shared.models import (
     QueryToKeywordRequest,
     RoutingRequest,
-    RoutingDecision,
+    QueryOperator,
     DefaultSearchField,
     SearchQueries,
     SearchRequest
@@ -103,7 +103,7 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
         search_queries = SearchQueries(
             query_1=keyword_list[0],
             search_field_1=DefaultSearchField.TOTAL,
-            operator_1="AND",
+        operator_1=QueryOperator.AND,
             query_2=keyword_list[1],
             search_field_2=DefaultSearchField.TOTAL
         )
@@ -111,10 +111,10 @@ async def cli_stratrgy_request(request: QueryToKeywordRequest):
         search_queries = SearchQueries(
             query_1=keyword_list[0],
             search_field_1=DefaultSearchField.TOTAL,
-            operator_1="AND",
+            operator_1=QueryOperator.AND,
             query_2=keyword_list[1],
             search_field_2=DefaultSearchField.TOTAL,
-            operator_2="AND",
+            operator_2=QueryOperator.AND,
             query_3=keyword_list[2],
             search_field_3=DefaultSearchField.TOTAL
         )

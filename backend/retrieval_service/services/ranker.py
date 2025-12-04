@@ -131,7 +131,7 @@ class RankerService:
                 metadata=doc.metadata,
                 rerank_score=float(score),
                 original_score=doc.score,
-                source=doc.metadata.get('data_source', 'unknown'),
+                source=doc.metadata.get('source', 'unknown'),
                 rank=0  # 나중에 설정
             )
             ranked.append(ranked_doc)

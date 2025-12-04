@@ -57,4 +57,4 @@ class RoutingService:
                 reason="라우팅 결정 실패로 인한 기본값 반환"
             )
         
-        return response.content
+        return response.parsed
