@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from contextlib import asynccontextmanager
 from shared.models import SearchRequest, GenerationRequest
 from retrieval_service.services.search_executor import SearchExecutor
 from shared.config import settings
@@ -12,9 +13,19 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(settings.console_handler)
 logger.addHandler(settings.file_handler)
 
-app = FastAPI(title="Retrieval Service", version="1.0.0")
+search_service = None
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global search_service
+    
+    logger.info("[System] Retrieval Service 시작!")
+    search_service = SearchExecutor()
 
-service = SearchExecutor()
+    yield
+
+    logger.info("[System] Retrieval Service 종료.")
+
+app = FastAPI(title="Retrieval Service", version="1.0.0")
 
 # Debugging: 요청 유효성 검사 오류 처리기
 @app.exception_handler(RequestValidationError)
@@ -26,9 +37,9 @@ async def validation_exception_handler(request, exc):
         content={"detail": exc.errors(), "body": exc.body},
     )
 
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+@app.get("/")
+def read_root():
+    return {"message": "Retrieval Service is running!"}
 
 @app.post("/search", response_model=GenerationRequest)
 async def search(request: SearchRequest):
@@ -37,7 +48,7 @@ async def search(request: SearchRequest):
     """
     try:
         logger.info(f"Generating response for query: {request.user_query}")
-        result = await service.execute(request)
+        result = await search_service.execute(request)
         return result
     except Exception as e:
         logger.error(f"Error in generation: {e}")

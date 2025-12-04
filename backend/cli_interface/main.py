@@ -1,11 +1,16 @@
 import asyncio
 import httpx
 import uuid
-import sys
 import contextlib
 
-from shared.models import RankedDocument, RetrievalResult, GenerationRequest
+from shared.models import GenerationRequest
 from shared.config import settings
+
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(settings.console_handler)
+logger.addHandler(settings.file_handler)
 
 # 서비스 URL 정의
 SERVICES = {
@@ -24,8 +29,8 @@ class ResearchAssistantCLI:
         self.writer = writer
 
         # 키워드 생성 모델 설정
-        #self.keywords_generate_model = "gemini"
-        self.keywords_generate_model = "lora"
+        self.keywords_generate_model = "gemini"
+        # self.keywords_generate_model = "lora"
 
     async def print(self, message: str = ""):
         """클라이언트에게 메시지 전송"""
@@ -139,7 +144,7 @@ class ResearchAssistantCLI:
 
                 except ConnectionError:
                     # ConnectionResetError, BrokenPipeError, ConnectionAbortedError 등을 모두 포함
-                    print("클라이언트와의 연결이 종료되었습니다.")
+                    logger.warning("클라이언트와의 연결이 종료되었습니다.")
                     break
                 except Exception as e:
                     await self.print(f"\n[Error] {e}")
@@ -276,17 +281,17 @@ class ResearchAssistantCLI:
 
 async def handle_client(reader, writer):
     addr = writer.get_extra_info('peername')
-    print(f"New connection from {addr}")
+    logger.info(f"New connection from {addr}")
     cli = ResearchAssistantCLI(reader, writer)
     await cli.start()
-    print(f"Connection closed from {addr}")
+    logger.info(f"Connection closed from {addr}")
 
 async def main():
     server = await asyncio.start_server(
         handle_client, '0.0.0.0', settings.CLI_SERVICE_PORT)
 
     addr = server.sockets[0].getsockname()
-    print(f'Serving on {addr}')
+    logger.info(f'Serving on {addr}')
 
     async with server:
         await server.serve_forever()

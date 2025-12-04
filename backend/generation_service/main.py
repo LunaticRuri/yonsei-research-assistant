@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
 from shared.models import GenerationRequest, GenerationResult
 from generation_service.services.generator import GeneratorService
 from shared.config import settings
@@ -10,13 +11,25 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(settings.console_handler)
 logger.addHandler(settings.file_handler)
 
+
+generator_service = None
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global generator_service
+    
+    logger.info("[System] Generation Service 시작!")
+    
+    generator_service = GeneratorService()
+
+    yield
+
+    logger.info("[System] Generation Service 종료.")
+
 app = FastAPI(title="Generation Service", version="1.0.0")
 
-generator_service = GeneratorService()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+@app.get("/")
+def read_root():
+    return {"message": "Generation Service is running!"}
 
 @app.post("/generate", response_model=GenerationResult)
 async def generate_response(request: GenerationRequest):

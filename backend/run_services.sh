@@ -12,7 +12,8 @@ NC='\033[0m' # No Color
 
 # 스크립트 디렉토리 및 프로젝트 루트 설정
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+VENV_PATH="/home/yggnamu/venv/bin/activate"
 
 # PID 파일 디렉토리
 PID_DIR="$SCRIPT_DIR/pids"
@@ -61,7 +62,9 @@ check_status() {
 start_service() {
     local service=$1
     
-    cd "$PROJECT_ROOT" || exit
+    cd "$SCRIPT_DIR" || exit
+    
+    source "$VENV_PATH"
 
     case $service in
         "cli")
@@ -70,7 +73,7 @@ start_service() {
             else
                 echo -e "${BLUE}CLI 서비스 시작 중...${NC}"
                 # 로그는 별도 처리되므로 /dev/null로 리다이렉트
-                python3 -m backend.cli_interface.main > /dev/null 2>&1 &
+                nohup python3 -m cli_interface.main > /dev/null 2>&1 &
                 echo $! > "$CLI_PID_FILE"
                 echo -e "${GREEN}CLI 서비스 시작됨 (PID: $(cat "$CLI_PID_FILE"))${NC}"
             fi
@@ -80,7 +83,7 @@ start_service() {
                 echo -e "${YELLOW}Strategy 서비스가 이미 실행 중입니다.${NC}"
             else
                 echo -e "${BLUE}Strategy 서비스 시작 중...${NC}"
-                uvicorn backend.strategy_service.main:app --host 0.0.0.0 --port 8002 > /dev/null 2>&1 &
+                nohup python3 -m strategy_service.main > /dev/null 2>&1 &
                 echo $! > "$STRATEGY_PID_FILE"
                 echo -e "${GREEN}Strategy 서비스 시작됨 (PID: $(cat "$STRATEGY_PID_FILE"))${NC}"
             fi
@@ -90,7 +93,7 @@ start_service() {
                 echo -e "${YELLOW}Retrieval 서비스가 이미 실행 중입니다.${NC}"
             else
                 echo -e "${BLUE}Retrieval 서비스 시작 중...${NC}"
-                uvicorn backend.retrieval_service.main:app --host 0.0.0.0 --port 8003 > /dev/null 2>&1 &
+                nohup python3 -m retrieval_service.main > /dev/null 2>&1 &
                 echo $! > "$RETRIEVAL_PID_FILE"
                 echo -e "${GREEN}Retrieval 서비스 시작됨 (PID: $(cat "$RETRIEVAL_PID_FILE"))${NC}"
             fi
@@ -100,7 +103,7 @@ start_service() {
                 echo -e "${YELLOW}Generation 서비스가 이미 실행 중입니다.${NC}"
             else
                 echo -e "${BLUE}Generation 서비스 시작 중...${NC}"
-                uvicorn backend.generation_service.main:app --host 0.0.0.0 --port 8004 > /dev/null 2>&1 &
+                nohup python3 -m generation_service.main > /dev/null 2>&1 &
                 echo $! > "$GENERATION_PID_FILE"
                 echo -e "${GREEN}Generation 서비스 시작됨 (PID: $(cat "$GENERATION_PID_FILE"))${NC}"
             fi
