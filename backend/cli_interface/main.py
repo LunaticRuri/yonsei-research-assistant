@@ -3,6 +3,7 @@ import httpx
 import uuid
 import sys
 
+from shared.models import RankedDocument, RetrievalResult, GenerationRequest
 from shared.config import settings
 
 # 서비스 URL 정의
@@ -175,7 +176,11 @@ class ResearchAssistantCLI:
             )
             strategy_response.raise_for_status()
             search_request = strategy_response.json()
-            
+            await self.print("   ✅ 검색 전략 수립 완료.")
+            await self.print(f"       - 검색 쿼리: {search_request.get('queries','')}")
+            await self.print(f"       - 라우팅 경로: {search_request.get('routes','')}")
+
+            # 2. Retrieval Service (검색 수행)
             retrieval_response = await self.client.post(
                 f"{SERVICES['retrieval']}/search",
                 json=search_request
@@ -188,8 +193,19 @@ class ResearchAssistantCLI:
                 return
 
             # 검색 결과 요약 출력
-            results = generation_request.get("retrieval_result", []).get("documents", [])
-            await self.print(f"   ✅ {len(results)}건의 문서를 찾았습니다.")
+            try:
+                generation_request_model = GenerationRequest.model_validate_json(generation_request)
+                documents = generation_request_model.retrieval_result.documents
+                
+                documents.sort(key=lambda doc: doc.rank) # 랭크 순 정렬
+                
+                await self.print(f"   ✅ 검색 결과 {len(documents)}건 수집 완료. 주요 내용 요약:")
+                
+                for doc in documents:
+                    await self.print(f"       - [Rank {doc.rank}] {doc.metadata}...")                
+                
+            except Exception as e:
+                await self.print(f"   ⚠️ 검색 결과 요약 중 오류 발생: {e}")
 
             # 3. Generation Service (답변 생성)
             await self.print("   [2/3] 답변 생성 중...")
@@ -209,7 +225,7 @@ class ResearchAssistantCLI:
             # 4. 최종 결과 출력
             await self.print("\n" + "="*20 + " 📝 최종 답변 " + "="*20)
             await self.print(final_output.get("answer", "답변을 생성할 수 없습니다."))
-            await self.print("="*50)
+            await self.print("="*60)
 
         except httpx.HTTPStatusError as e:
             await self.print(f"[Service Error] {e.response.status_code}: {e.response.text}")
