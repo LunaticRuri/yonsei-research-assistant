@@ -54,7 +54,7 @@ class QueryTranslationService:
 
         if adapter_path and os.path.exists(adapter_path):
             try:
-                base_model_id = "paust/pko-chat-t5-large"
+                base_model_id = "paust/pko-flan-t5-large"
                 self.logger.info(f"🔄 LoRA 모델 로드 시도: {adapter_path}")
                 self.tokenizer = AutoTokenizer.from_pretrained(base_model_id)
                 base_model = AutoModelForSeq2SeqLM.from_pretrained(
