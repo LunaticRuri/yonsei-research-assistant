@@ -9,6 +9,7 @@ from shared.config import settings
 SERVICES = {
     "dialogue": settings.DIALOGUE_SERVICE_URL,
     "strategy": settings.STRATEGY_SERVICE_URL,
+    "retrieval": settings.RETRIEVAL_SERVICE_URL,
     "generation": settings.GENERATION_SERVICE_URL,
 }
 
@@ -16,7 +17,7 @@ class ResearchAssistantCLI:
     def __init__(self, reader, writer):
         self.session_id = str(uuid.uuid4())
         self.conversation_history = []
-        self.client = httpx.AsyncClient(timeout=60.0)
+        self.client = httpx.AsyncClient(timeout=180.0)
         self.reader = reader
         self.writer = writer
 
