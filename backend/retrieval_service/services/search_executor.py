@@ -17,6 +17,7 @@ class SearchExecutor:
         self.refiner = RefinerService()
 
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
     
@@ -42,8 +43,8 @@ class SearchExecutor:
                 metadata={'error': 'No documents found'},
                 needs_requestioning=True
             )
-        
-        self.logger.debug(f"Retrieved documents: {'\n'.join(raw_documents)}")
+        raw_docs_str = '\n'.join(str(doc) for doc in raw_documents)
+        self.logger.debug(f"Retrieved documents: {raw_docs_str})")
 
         # Step 2: Rerank + Fusion
         self.logger.info(f"Reranking {len(raw_documents)} documents")

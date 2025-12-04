@@ -13,6 +13,7 @@ from shared.config import settings
 
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(settings.console_handler)
 logger.addHandler(settings.file_handler)
     

@@ -10,7 +10,7 @@ from retrieval_service.adapters.base_adapters import BaseRetriever
 from retrieval_service.scrapers.search_params import VectorSearchParams
 from retrieval_service.config import retrieval_settings
 from shared.models import Document, SearchRequest, QueryOperator, RetrievalRoute
-
+from shared.config import settings
 
 
 class VectorDBAdapter(BaseRetriever):
@@ -40,6 +40,9 @@ class VectorDBAdapter(BaseRetriever):
         
         self.encoder = SentenceTransformer(retrieval_settings.VECTOR_EMBEDDING_MODEL)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     async def request_to_search_params(self, request: SearchRequest) -> VectorSearchParams:
         """

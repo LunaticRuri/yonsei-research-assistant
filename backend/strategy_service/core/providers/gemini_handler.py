@@ -46,7 +46,11 @@ class GeminiHandler(BaseAPIHandler):
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
         self.model = settings.GEMINI_FLASH_MODEL
+        
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
 
     async def generate_keywords(self, query: str) -> str:
         formatted_prompt = KEYWORDS_PROMPT_TEMPLATE.format(query)

@@ -3,8 +3,9 @@ from typing import Optional
 import logging
 import re
 from playwright.async_api import async_playwright
+from shared.config import settings
 
-logger = logging.getLogger(__name__)
+
 
 class BaseLibraryScraper:
     """모든 도서관 스크래퍼의 상위 클래스"""
@@ -26,6 +27,11 @@ class BaseLibraryScraper:
             'Accept-Encoding': 'gzip, deflate, br'
         }
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
+
     async def _get_session(self) -> aiohttp.ClientSession:
         """aiohttp 세션 가져오기 또는 생성"""
         if self.session is None or self.session.closed:
@@ -43,7 +49,7 @@ class BaseLibraryScraper:
         1. Playwright를 사용하여 실제 브라우저에서 로그인을 수행
         2. 생성된 인증 쿠키를 aiohttp 세션으로 복사
         """
-        logger.info(f"Starting login process for user: {user_id}")
+        self.logger.info(f"Starting login process for user: {user_id}")
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
@@ -67,7 +73,7 @@ class BaseLibraryScraper:
 
                 # 3. 로그인 버튼 클릭
                 # submit 타입의 input이므로 클릭 시 폼 전송이 일어남
-                logger.info("Clicking login button...")
+                self.logger.info("Clicking login button...")
                 
                 # 클릭과 동시에 네비게이션(페이지 이동)이 일어날 것을 기다림
                 async with page.expect_navigation(timeout=10000):
@@ -83,7 +89,7 @@ class BaseLibraryScraper:
                 session = await self._get_session()
                 
                 if not cookies:
-                    logger.error("No cookies found after login attempt.")
+                    self.logger.error("No cookies found after login attempt.")
                     return False
 
                 for cookie in cookies:
@@ -91,11 +97,11 @@ class BaseLibraryScraper:
                     session.cookie_jar.update_cookies({cookie['name']: cookie['value']})
                 
                 self.is_logged_in = True  # 로그인 상태 설정
-                logger.info(f"Login successful. Transferred {len(cookies)} cookies to session.")
+                self.logger.info(f"Login successful. Transferred {len(cookies)} cookies to session.")
                 return True
 
             except Exception as e:
-                logger.error(f"Login failed due to error: {e}")
+                self.logger.error(f"Login failed due to error: {e}")
                 self.is_logged_in = False
                 return False
             finally:
@@ -106,29 +112,29 @@ class BaseLibraryScraper:
         로그아웃 수행: 연세대 도서관 로그아웃 URL에 요청을 보내 서버 측 세션 종료
         """
         if not self.is_logged_in:
-            logger.info("Not logged in, skipping logout.")
+            self.logger.info("Not logged in, skipping logout.")
             return True
             
         try:
-            logger.info("Performing logout...")
+            self.logger.info("Performing logout...")
             session = await self._get_session()
             
             # 로그아웃 URL로 GET 요청
             async with session.get(self.logout_url, timeout=10) as response:
                 if response.status in [200, 302, 303]:  # 성공 또는 리다이렉트
-                    logger.info(f"Logout successful (status: {response.status}).")
+                    self.logger.info(f"Logout successful (status: {response.status}).")
                     self.is_logged_in = False
                     
                     # 쿠키 클리어
                     session.cookie_jar.clear()
                     return True
                 else:
-                    logger.warning(f"Logout returned unexpected status: {response.status}")
+                    self.logger.warning(f"Logout returned unexpected status: {response.status}")
                     self.is_logged_in = False  # 상태는 초기화
                     return False
                     
         except Exception as e:
-            logger.error(f"Logout failed: {e}")
+            self.logger.error(f"Logout failed: {e}")
             self.is_logged_in = False  # 에러 발생 시에도 상태 초기화
             return False
 

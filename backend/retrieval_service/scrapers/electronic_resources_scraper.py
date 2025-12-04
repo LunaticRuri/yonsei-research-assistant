@@ -122,6 +122,7 @@ class ElectronicResourcesScraper(BaseLibraryScraper):
         self.is_logged_in = False
 
         self.logging = logging.getLogger(__name__)
+        self.logging.setLevel(logging.DEBUG)
         self.logging.addHandler(settings.console_handler)
         self.logging.addHandler(settings.file_handler)
         

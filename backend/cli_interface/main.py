@@ -2,6 +2,7 @@ import asyncio
 import httpx
 import uuid
 import sys
+import contextlib
 
 from shared.models import RankedDocument, RetrievalResult, GenerationRequest
 from shared.config import settings
@@ -29,6 +30,35 @@ class ResearchAssistantCLI:
             await self.writer.drain()
         except Exception:
             pass
+
+    async def print_raw(self, message: str = ""):
+        """클라이언트에게 메시지 전송 (줄바꿈 없음)"""
+        try:
+            self.writer.write(str(message).encode('utf-8'))
+            await self.writer.drain()
+        except Exception:
+            pass
+
+    @contextlib.asynccontextmanager
+    async def loading_indicator(self):
+        task = asyncio.create_task(self._animate_loading())
+        try:
+            yield
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            await self.print_raw("\n")
+
+    async def _animate_loading(self):
+        try:
+            while True:
+                await asyncio.sleep(0.5)
+                await self.print_raw(".")
+        except asyncio.CancelledError:
+            raise
 
     async def input(self, prompt: str = "") -> str:
         """클라이언트로부터 입력 받기"""
@@ -163,17 +193,18 @@ class ResearchAssistantCLI:
 
         try:
             # 1. Strategy Service (키워드 생성 + 검색 수행)
-            await self.print("   [1/3] 검색 전략 수립 및 데이터 수집 중...")
+            await self.print_raw("   [1/3] 검색 전략 수립 및 데이터 수집 중")
             
             # NOTE: 여기서 'gemini' or 'Lora' 모드 선택 가능
             strategy_payload = {
                 "query": query,
                 "mode": "gemini" # 또는 'lora' 등 설정 가능
             }
-            strategy_response = await self.client.post(
-                f"{SERVICES['strategy']}/cli_stratrgy_request", 
-                json=strategy_payload
-            )
+            async with self.loading_indicator():
+                strategy_response = await self.client.post(
+                    f"{SERVICES['strategy']}/cli_stratrgy_request", 
+                    json=strategy_payload
+                )
             strategy_response.raise_for_status()
             search_request = strategy_response.json()
             await self.print("   ✅ 검색 전략 수립 완료.")
@@ -181,10 +212,12 @@ class ResearchAssistantCLI:
             await self.print(f"       - 라우팅 경로: {search_request.get('routes','')}")
 
             # 2. Retrieval Service (검색 수행)
-            retrieval_response = await self.client.post(
-                f"{SERVICES['retrieval']}/search",
-                json=search_request
-            )
+            await self.print_raw("   ... 데이터 검색 실행 중")
+            async with self.loading_indicator():
+                retrieval_response = await self.client.post(
+                    f"{SERVICES['retrieval']}/search",
+                    json=search_request
+                )
             retrieval_response.raise_for_status()
             generation_request = retrieval_response.json()
 
@@ -208,17 +241,18 @@ class ResearchAssistantCLI:
                 await self.print(f"   ⚠️ 검색 결과 요약 중 오류 발생: {e}")
 
             # 3. Generation Service (답변 생성)
-            await self.print("   [2/3] 답변 생성 중...")
+            await self.print_raw("   [2/3] 답변 생성 중")
             generation_payload = {
                 "query": query,
                 "retrieval_result": generation_request.get("retrieval_result", [])
             }
             
             # Generation Service 호출
-            generation_response = await self.client.post(
-                f"{SERVICES['generation']}/generate",
-                json=generation_payload
-            )
+            async with self.loading_indicator():
+                generation_response = await self.client.post(
+                    f"{SERVICES['generation']}/generate",
+                    json=generation_payload
+                )
             generation_response.raise_for_status()
             final_output = generation_response.json()
 

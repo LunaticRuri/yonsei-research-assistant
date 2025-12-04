@@ -6,6 +6,7 @@ import logging
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(settings.console_handler)
 logger.addHandler(settings.file_handler)
 

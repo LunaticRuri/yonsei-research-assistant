@@ -12,6 +12,7 @@ from shared.models import (
     HoldingsMaterialType,
     LibraryHoldingInfo
 )
+from shared.config import settings
 
 
 
@@ -24,6 +25,9 @@ class LibraryHoldingsAdapter(BaseRetriever):
         # self.scraper = LibraryHoldingsScraper(user_id=settings.YONSEI_ID, user_pw=settings.YONSEI_PW)
         self.scraper = LibraryHoldingsScraper()
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
         
         # NOTE: num_workers는 1로 해야 비동기 지원됨
         self.kiwi = Kiwi(num_workers=1)

@@ -33,6 +33,7 @@ class RoutingService:
         self.model = settings.GEMINI_FLASH_MODEL
 
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
 

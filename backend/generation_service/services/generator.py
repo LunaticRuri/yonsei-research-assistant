@@ -16,6 +16,7 @@ class GeneratorService:
         self.llm_client = LLMClient()
 
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
 

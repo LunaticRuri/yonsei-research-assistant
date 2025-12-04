@@ -24,6 +24,7 @@ class LLMClient:
         self.pass_threshold = 3  # Self-RAG 평가 통과 기준 점수
 
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
         

@@ -5,16 +5,25 @@ from retrieval_service.config import retrieval_settings
 import logging
 
 from shared.models import RankedDocument, AnalysisUserQuery, CRAGResult, RelevanceLevel, GeneratedCRAGResponse
+from shared.config import settings
+
+
 
 class RefinerService:
     """CRAG (Corrective RAG) - 검색 결과 품질 평가"""
     
     def __init__(self):
+        
         self.client = genai.Client(api_key=retrieval_settings.GEMINI_API_KEY)
         self.model_name = retrieval_settings.CRAG_LLM_MODEL
+        
         self.relevance_threshold = retrieval_settings.CRAG_RELEVANCE_THRESHOLD
         self.incorrect_ratio_threshold = retrieval_settings.CRAG_INCORRECT_RATIO_THRESHOLD
+        
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     async def analyze_user_query(
         self,

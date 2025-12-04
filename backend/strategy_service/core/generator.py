@@ -24,6 +24,7 @@ class QueryTranslationService:
         print("[Init] QueryTranslationService (Factory Mode) 초기화...")
         
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(settings.console_handler)
         self.logger.addHandler(settings.file_handler)
 

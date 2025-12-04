@@ -7,6 +7,8 @@ from collections import defaultdict
 
 from retrieval_service.config import retrieval_settings
 from shared.models import RetrievalRoute, Document, RankedDocument
+from shared.config import settings
+
 
 class RankerService:
     """여러 소스의 검색 결과를 융합하고 재순위화"""
@@ -15,6 +17,9 @@ class RankerService:
         # Cross-encoder 모델 로드 (semantic reranking용)
         self.reranker = CrossEncoder(retrieval_settings.RERANK_MODEL)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
     
     def tmp_rerank_and_fuse(
         self,

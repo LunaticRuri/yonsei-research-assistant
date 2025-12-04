@@ -12,7 +12,7 @@ from shared.models import (
     ElectronicSearchField,
     ElectronicResourceInfo
 )
-
+from shared.config import settings
 
 
 class ElectronicResourcesAdapter(BaseRetriever):
@@ -24,6 +24,9 @@ class ElectronicResourcesAdapter(BaseRetriever):
             user_pw=retrieval_settings.YONSEI_PW
         )
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(settings.console_handler)
+        self.logger.addHandler(settings.file_handler)
         # NOTE: num_workers는 1로 해야 비동기 지원됨
         self.kiwi = Kiwi(num_workers=1) 
     
