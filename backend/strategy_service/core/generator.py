@@ -4,6 +4,8 @@ import torch
 import asyncio
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
+from langchain_core.prompts import ChatPromptTemplate
+import re
 
 # 부품들 가져오기
 from strategy_service.core.providers.openai_handler import OpenAIHandler
