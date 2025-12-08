@@ -1,0 +1,14 @@
+
+============================================================
+🏆 Indexing Method Comparison Results
+============================================================
+Rank  Method Name               Score      Avg Rel    Wins 
+------------------------------------------------------------
+1     Chunk 200 (Overlap 50)    193.0      16.06      45   
+2     Original                  186.0      15.93      47   
+3     Chunk 200                 161.0      15.54      29   
+------------------------------------------------------------
+* Score Calculation: 1st=3pts, 2nd=2pts, 3rd=1pt (Ties split points)
+* Avg Rel: Average number of relevant documents retrieved in Top 20
+* Wins: Number of queries where the method was 1st (including ties)
+============================================================
