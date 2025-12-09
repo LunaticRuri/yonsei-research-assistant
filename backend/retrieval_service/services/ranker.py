@@ -50,9 +50,20 @@ class RankerService:
         random.shuffle(unique_docs)
         
         # 3. Top-K 필터링 및 순위 부여
-        final_docs = unique_docs[:retrieval_settings.RERANK_TOP_K]
-        for rank, doc in enumerate(final_docs, start=1):
-            doc.rank = rank
+        sliced_docs = unique_docs[:retrieval_settings.RERANK_TOP_K]
+        final_docs = []
+
+        for rank, doc in enumerate(sliced_docs, start=1):
+            # Document -> RankedDocument 변환
+            ranked_doc = RankedDocument(
+                content=doc.content,
+                metadata=doc.metadata,
+                rerank_score=0.0,  # Random이라 점수 없음
+                original_score=doc.score,
+                source=doc.metadata.get('source', 'unknown'),
+                rank=rank
+            )
+            final_docs.append(ranked_doc)
         
         self.logger.info(f"Final ranked documents: {len(final_docs)}")
         
