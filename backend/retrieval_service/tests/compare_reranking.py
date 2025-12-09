@@ -125,12 +125,6 @@ async def evaluate_reranking(queries: List[Dict], top_k: int = 10):
         if not queries_data:
             logger.warning(f"Skipping query '{user_query}' due to missing 'queries' field.")
             continue
-        
-        # Force operators to OR
-        if queries_data.get("operator_1"):
-            queries_data["operator_1"] = "or"
-        if queries_data.get("operator_2"):
-            queries_data["operator_2"] = "or"
             
         try:
             search_queries = SearchQueries(**queries_data)
@@ -226,7 +220,7 @@ async def evaluate_reranking(queries: List[Dict], top_k: int = 10):
                     "hit": has_relevant,
                     "reciprocal_rank": 1.0 / first_relevant_rank if has_relevant else 0
                 })
-                
+                logger.info(f"  -> [{name}] Query: {user_query} Hit: {has_relevant}, First Relevant Rank: {first_relevant_rank}")
             except Exception as e:
                 logger.error(f"Reranking failed for {name}: {e}")
 
@@ -268,7 +262,7 @@ async def main():
         return
 
     # Use a subset for testing (e.g., first 5 for speed, or all)
-    # test_queries = all_queries[-2:] 
+    #test_queries = all_queries[10:11] 
     test_queries = all_queries
     logger.info(f"Loaded {len(all_queries)} queries. Using first {len(test_queries)} for evaluation.")
     
