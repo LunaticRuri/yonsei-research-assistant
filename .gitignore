@@ -232,3 +232,5 @@ playground.py
 *.jsonl
 rerank_models/
 faiss_index_map/
+
+~$*
